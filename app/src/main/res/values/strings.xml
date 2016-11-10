@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">My阅读</string>
+    <string name="btn_exits">退出</string>
+    <string name="btn_local">本地</string>
+    <string name="text_shelf">书架</string>
+    <string name="create_db">正在创建数据库&#8230;</string>
+    <string name="file_name">文件名</string>
+    <string name="file_size">文件大小</string>
+    <string name="mkDir">创建文件夹成功</string>
+    <string name="mkDirEr">创建文件夹失败</string>
+    <string name="isExist">文件已存在</string>
+    <string name="isEmpty">目录为空</string>
+    <string name="book_cache">BookCache</string>
+    <string name="browser_title">本地文件浏览器</string>
+    <string name="shelf_menu_title">书籍操作</string>
+    <string name="shelf_menu_item_1">删除</string>
+    <string name="shelf_dialog_title">是否删除</string>
+    <string name="shelf_dialog_content">提示</string>
+    <string name="shelf_dialog_yes">是</string>
+    <string name="shelf_dialog_no">否</string>
+
+</resources>
