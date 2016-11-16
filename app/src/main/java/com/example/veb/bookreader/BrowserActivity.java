@@ -31,7 +31,17 @@ public class BrowserActivity extends Activity implements ClickListener {
         mListView = (ListView) findViewById(R.id.list);
         String txtPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/TxtBook";
         File file = new File(txtPath);
-        mList = dbManager.getNameList(file);
+        if (!file.exists()) {
+            boolean isMkdirs = file.mkdirs();
+            if (isMkdirs) {
+                ToastUtil.showToast(this, R.string.mkDir, 0);
+                mList = null;
+            } else
+                ToastUtil.showToast(this, R.string.mkDirEr, 0);
+        } else {
+            Log.d(TAG, "=================文件已存在");
+            mList = dbManager.getNameList(file);
+        }
         TxtAdapter adapter = new TxtAdapter(BrowserActivity.this, mList, BrowserActivity.this);
         mListView.setAdapter(adapter);
     }

@@ -12,9 +12,9 @@ import java.text.DecimalFormat;
  * Created by VEB on 2016/11/9.
  */
 
-public class FileSize {
+public class FileSizeUtil {
 
-    private static final String TAG_FileSize = "FileSize";
+    private static final String TAG_FileSize = "FileSizeUtil";
 
     private long FileSize(File file) {
         long fileSize = 0;
@@ -38,7 +38,8 @@ public class FileSize {
                         dirSize += FileSize(file);
                     }
                 }
-            }
+            } else
+                dirSize = FileSize(dir);
         }
         return dirSize;
     }
@@ -49,21 +50,21 @@ public class FileSize {
         if (size == 0) {
             return "0B";
         } else if (size < 1024) {
-            formats = df.format( size )+ "B";
+            formats = df.format(size) + "B";
         } else if (size < 1024 * 1024) {
-            formats = df.format( size/1024 ) +"KB";
-        }else if (size < 1024 * 1024 * 1024){
-            formats = df.format( size/(1024 * 1024) )+ "MB";
-        }else {
-            formats = df.format( size/(1027 * 1024 *1024) )+ "GB";
+            formats = df.format(size / 1024) + "KB";
+        } else if (size < 1024 * 1024 * 1024) {
+            formats = df.format(size / (1024 * 1024)) + "MB";
+        } else {
+            formats = df.format(size / (1027 * 1024 * 1024)) + "GB";
         }
         return formats;
     }
 
-    public String getFileOrDirSize(String filePath){
+    public String getFileOrDirSize(File file) {
         String return_size = "";
-        File file = new File(filePath);
         return_size = FormatSize(DirSize(file));
         return return_size;
     }
+
 }

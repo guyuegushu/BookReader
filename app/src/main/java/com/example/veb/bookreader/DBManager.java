@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Environment;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -21,12 +20,13 @@ import java.util.List;
  * Created by VEB on 2016/10/11.
  * 遍历以找到.txt文件，并存入list中
  */
+
 public class DBManager {
 
     final static String TAG = "DBManager";
     private Context context;
     private SQLiteDatabase db;
-    private FileSize size;
+    private FileSizeUtil size;
 
     public DBManager(Context context) {
         this.context = context;
@@ -36,56 +36,38 @@ public class DBManager {
     }
 
     protected List<TxtFile> getNameList(File bookFiles) {
-        if (!bookFiles.exists()) {
-            boolean isMkdirs = bookFiles.mkdirs();
-            if (isMkdirs) {
-                ToastUtil.showToast(context, R.string.mkDir, 0);
-            } else
-                ToastUtil.showToast(context, R.string.mkDirEr, 0);
-        } else
-            Log.d(TAG, "=================文件已存在");
 
         List<TxtFile> browserList = new ArrayList<>();
-        TxtFile txtFile = getDirInfo(bookFiles);
-        for (File f : files) {
 
-
-        }
-        if (txtFile != null) {
-            Log.d(TAG, "================添加到表中");
-            browserList.add(txtFile);
+        File[] files = bookFiles.listFiles();
+        TxtFile txtFile = null;
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    getNameList(f);//只需要txt
+                } else {
+                    txtFile = getTxtFileName(f);
+                    if (txtFile != null) {
+                        Log.d(TAG, txtFile.getTxtFileName() + "================添加到表中");
+                        browserList.add(txtFile);
+                    } else {
+                        Log.d(TAG, "=================文件不是文本文件");
+                    }
+                }
+            }
         } else {
-            Log.d(TAG, "=================文件不是文本文件");
+            ToastUtil.showToast(context, R.string.isEmpty, 0);
         }
         return browserList;
     }
 
-    private TxtFile getDirInfo(File file) {
-        File[] files = file.listFiles();
-        TxtFile txtFile = null;
-        if (files != null) {
-            Log.d(TAG, "=================Dir循环ing");
-            if (file.isDirectory()) {
-                Log.d(TAG, "=================目录");
-                txtFile = getDirInfo(file);
-            } else {
-                Log.d(TAG, "=================文件fffffff");
-                txtFile = getFileInfo(file);
-            }
-
-        } else {
-            ToastUtil.showToast(context, R.string.isEmpty, 0);
-        }
-        return txtFile;
-    }
-
-    private TxtFile getFileInfo(File file) {
+    private TxtFile getTxtFileName(File file) {
         TxtFile txtFile = null;
         String fileName = file.getName();
-        size = new FileSize();
+        size = new FileSizeUtil();
         if (fileName.endsWith(".txt")) {
             Log.d(TAG, "=================获取txt结尾的文件");
-            long fileSize = size.DirSize(file);
+            String fileSize = size.getFileOrDirSize(file);
             txtFile = new TxtFile(file.getAbsolutePath(), fileName, fileSize);
         }
         return txtFile;
@@ -140,7 +122,7 @@ public class DBManager {
             do {
                 String fileName = cursor.getString(cursor.getColumnIndex("NAME"));
                 String filePath = cursor.getString(cursor.getColumnIndex("ADDRESS"));
-                int fileSize = cursor.getInt(cursor.getColumnIndex("BOOK_SIZE"));
+                String fileSize = cursor.getString(cursor.getColumnIndex("BOOK_SIZE"));
                 txtFile = new TxtFile(filePath, fileName, fileSize);
                 shelfList.add(txtFile);
             } while (cursor.moveToNext());
@@ -199,7 +181,7 @@ public class DBManager {
 
     private boolean isNeedTocache(String bookPath) {
         boolean check = true;
-        FileSize fileSize = new FileSize();
+        FileSizeUtil fileSize = new FileSizeUtil();
         File file = new File(bookPath);
         try {
             long size = fileSize.DirSize(file);

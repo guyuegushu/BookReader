@@ -6,9 +6,9 @@ package com.example.veb.bookreader;
 public class TxtFile {
     private String txtFilePath;
     private String txtFileName;
-    private long txtFileSize;
+    private String txtFileSize;
 
-    public TxtFile(String txtFilePath, String txtFileName, long txtFileSize) {
+    public TxtFile(String txtFilePath, String txtFileName, String txtFileSize) {
         this.txtFilePath = txtFilePath;
         this.txtFileName = txtFileName;
         this.txtFileSize = txtFileSize;
@@ -22,7 +22,7 @@ public class TxtFile {
         return txtFileName;
     }
 
-    public long getTxtFileSize() {
+    public String getTxtFileSize() {
         return txtFileSize;
     }
 }
