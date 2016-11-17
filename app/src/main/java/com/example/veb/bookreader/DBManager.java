@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -199,18 +200,25 @@ public class DBManager {
     private void cacheBook(String bookPath, int skipNum, int flags) {
 
         File bookFile = new File(bookPath);
-        int tmp = skipNum * (8 * 1024) - 64;
+        int tmp = skipNum * (8 * 1024 - 4);
         try {
             BufferedInputStream bis = new BufferedInputStream(new FileInputStream(bookFile));
             BufferedReader bufReader = new BufferedReader(new InputStreamReader(bis, "GBK"));
             char[] args = new char[8 * 1024];
+            Log.d(TAG, "++++++++++++++   准备判断是否第一次打开 ");
             if (isFirstOpen(bookPath)) { //第一次打开
                 bufReader.read(args);
                 saveCacheToDb(bookPath, new String(args), 1);
-                bufReader.skip(8 * 1024 - 64);
+
+                bufReader.skip(8 * 1024 - 4);
                 bufReader.read(args);
                 saveCacheToDb(bookPath, new String(args), 2);
-            } else {//不是第一次打开,cache到第skipNum次
+
+            } else if (skipNum == 1) {//判断是否到达首页
+                bufReader.read(args);
+                saveCacheToDb(bookPath, new String(args), 1);
+
+            }else {//不是首页就skip
                 bufReader.skip(tmp);
                 bufReader.read(args);
                 saveCacheToDb(bookPath, new String(args), flags);
@@ -223,16 +231,17 @@ public class DBManager {
     protected String getBookFromDb(String bookPath, int skipNum, int flags) {
         String cache = "";
         if (isNeedTocache(bookPath)) {
-//        if (isFirstOpen(bookPath)) {
             switch (flags) {
                 case 1: {//向前阅读
                     cacheBook(bookPath, skipNum, flags);
+                    if (isFirstOpen(bookPath))
                     cache = getCacheHead(bookPath);
                     break;
                 }
                 case 2: {//向后阅读
                     cacheBook(bookPath, skipNum, flags);
                     cache = getCacheBody(bookPath);
+
                     break;
                 }
                 default:
@@ -250,6 +259,7 @@ public class DBManager {
                     builder.append(len);
                 }
                 cache = builder.toString();
+                Log.d(TAG, "++++++++++++++++  cache 1 " + cache);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -257,13 +267,14 @@ public class DBManager {
         return cache;
     }
 
-    private boolean isFirstOpen(String bookPath) {
-
+    protected boolean isFirstOpen(String bookPath) {
+        Log.d(TAG, "++++++++++++++   正在判断是否第一次打开 ");
         String SQL_ISFIRST = "SELECT CACHE_BODY,CACHE_HEAD FROM BookInfo WHERE ADDRESS = ?";
         String args[] = new String[]{bookPath};
         Cursor cursor = db.rawQuery(SQL_ISFIRST, args);
-
-        boolean check = null == cursor || !cursor.moveToFirst();
+        cursor.moveToFirst();
+        boolean check = TextUtils.isEmpty(cursor.getString(cursor.getColumnIndex("CACHE_HEAD")));
+        Log.d(TAG, "++++++++++++++   是否第一次打开 " + check);
 
         if (cursor != null)
             cursor.close();
