@@ -3,6 +3,7 @@ package com.example.veb.bookreader;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 /**
  * Created by VEB on 2016/10/11.
@@ -16,7 +17,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private Context context;
 
     public DatabaseHelper(Context context) {
-        super(context, DATABASE_NAME, null, VERSION);
+        this(context, DATABASE_NAME, null, VERSION);
         this.context = context;
     }
 
@@ -27,7 +28,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        ToastUtil.showToast(context, R.string.create_db, 0);
         onUpgrade(db, 0, VERSION);
     }
 

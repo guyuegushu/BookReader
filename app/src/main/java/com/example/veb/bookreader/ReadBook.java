@@ -15,7 +15,6 @@ import android.widget.TextView;
  */
 public class ReadBook extends Activity {
 
-    private final static String TAG = "ReadBook";
     private TextView display;
     private DBManager dbManager;
     private ScrollView scrollView;

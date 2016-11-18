@@ -206,6 +206,8 @@ public class DBManager {
             BufferedReader bufReader = new BufferedReader(new InputStreamReader(bis, "GBK"));
             char[] args = new char[8 * 1024];
             Log.d(TAG, "++++++++++++++   准备判断是否第一次打开 ");
+            Log.d(TAG, "++++++++++++++   下面是新类的使用 ");
+            LogUtil.d("准备判断是否第一次打开");
             if (isFirstOpen(bookPath)) { //第一次打开
                 bufReader.read(args);
                 saveCacheToDb(bookPath, new String(args), 1);
@@ -241,7 +243,6 @@ public class DBManager {
                 case 2: {//向后阅读
                     cacheBook(bookPath, skipNum, flags);
                     cache = getCacheBody(bookPath);
-
                     break;
                 }
                 default:
