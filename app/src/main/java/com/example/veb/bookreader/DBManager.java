@@ -6,7 +6,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -24,7 +23,6 @@ import java.util.List;
 
 public class DBManager {
 
-    final static String TAG = "DBManager";
     private Context context;
     private SQLiteDatabase db;
     private FileSizeUtil size;
@@ -41,6 +39,7 @@ public class DBManager {
         List<TxtFile> browserList = new ArrayList<>();
 
         File[] files = bookFiles.listFiles();
+
         TxtFile txtFile = null;
         if (files != null) {
             for (File f : files) {
@@ -49,10 +48,9 @@ public class DBManager {
                 } else {
                     txtFile = getTxtFileName(f);
                     if (txtFile != null) {
-                        Log.d(TAG, txtFile.getTxtFileName() + "================添加到表中");
                         browserList.add(txtFile);
                     } else {
-                        Log.d(TAG, "=================文件不是文本文件");
+                        LogUtil.d("文件不是文本文件");
                     }
                 }
             }
@@ -67,18 +65,21 @@ public class DBManager {
         String fileName = file.getName();
         size = new FileSizeUtil();
         if (fileName.endsWith(".txt")) {
-            Log.d(TAG, "=================获取txt结尾的文件");
             String fileSize = size.getFileOrDirSize(file);
             txtFile = new TxtFile(file.getAbsolutePath(), fileName, fileSize);
         }
         return txtFile;
     }
 
+    private boolean isCursorExist(Cursor cursor){
+        return cursor != null && cursor.moveToFirst();
+    }
+
     protected void saveShelfToDb(TxtFile txtFile) {
 
         String SQL_EXIST = "SELECT NAME, ADDRESS FROM BookInfo WHERE ADDRESS = ?";
         Cursor cursor = db.rawQuery(SQL_EXIST, new String[]{txtFile.getTxtFilePath()});
-        if (cursor == null || !cursor.moveToFirst()) {//判断是否存在该书籍
+        if (!isCursorExist(cursor)) {//判断是否存在该书籍
             String SQL_INSERT_SHELF = "INSERT INTO BookInfo(" +
                     "NAME, ADDRESS, BOOK_SIZE) VALUES(?,?,?)";
             Object[] args = new Object[]{
@@ -88,7 +89,6 @@ public class DBManager {
         } else {
             cursor.close();
         }
-
     }
 
     private void saveCacheToDb(String bookPath, String cache, int flags) {
@@ -104,7 +104,6 @@ public class DBManager {
             case 2: {//向后阅读
                 String SQL_UPDATE_CACHE_BODY = "UPDATE BookInfo " +
                         "SET CACHE_BODY = ?"
-//                            + DatabaseUtils.sqlEscapeString(cache)
                         + " WHERE ADDRESS = ?";
                 Object args[] = new Object[]{cache, bookPath};
                 db.execSQL(SQL_UPDATE_CACHE_BODY, args);
@@ -119,7 +118,7 @@ public class DBManager {
 
         String SQL_QUERY = "SELECT NAME,ADDRESS,BOOK_SIZE FROM BookInfo";
         Cursor cursor = db.rawQuery(SQL_QUERY, null);
-        if (cursor != null && cursor.moveToFirst()) {
+        if (isCursorExist(cursor)) {
             do {
                 String fileName = cursor.getString(cursor.getColumnIndex("NAME"));
                 String filePath = cursor.getString(cursor.getColumnIndex("ADDRESS"));
@@ -130,6 +129,7 @@ public class DBManager {
         } else {
             ToastUtil.showToast(GlobalApplication.getContext(), "书架是空的，请选择书籍", 0);
         }
+
         try {
             if (cursor != null)
                 cursor.close();
@@ -147,10 +147,10 @@ public class DBManager {
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(SQL_HEAD_CACHE, args);
-            if (null != cursor && cursor.moveToFirst()) {
+            if (isCursorExist(cursor)) {
                 cache = cursor.getString(cursor.getColumnIndex("CACHE_HEAD"));
             } else {
-                Log.d(TAG, "####################### HEAD_CACHE不存在");
+                LogUtil.d("HEAD_CACHE不存在");
             }
         } finally {
             if (cursor != null) {
@@ -167,10 +167,10 @@ public class DBManager {
         Cursor cursor = null;
         try {
             cursor = db.rawQuery(SQL_BODY_CACHE, args);
-            if (null != cursor && cursor.moveToFirst()) {
+            if (isCursorExist(cursor)) {
                 cache = cursor.getString(cursor.getColumnIndex("CACHE_BODY"));
             } else {
-                Log.d(TAG, "####################### BODY_CACHE不存在");
+                LogUtil.d("BODY_CACHE不存在");
             }
         } finally {
             if (cursor != null) {
@@ -180,7 +180,7 @@ public class DBManager {
         return cache;
     }
 
-    private boolean isNeedTocache(String bookPath) {
+    private boolean isNeedToCache(String bookPath) {
         boolean check = true;
         FileSizeUtil fileSize = new FileSizeUtil();
         File file = new File(bookPath);
@@ -204,10 +204,10 @@ public class DBManager {
         try {
             BufferedInputStream bis = new BufferedInputStream(new FileInputStream(bookFile));
             BufferedReader bufReader = new BufferedReader(new InputStreamReader(bis, "GBK"));
+
             char[] args = new char[8 * 1024];
-            Log.d(TAG, "++++++++++++++   准备判断是否第一次打开 ");
-            Log.d(TAG, "++++++++++++++   下面是新类的使用 ");
             LogUtil.d("准备判断是否第一次打开");
+
             if (isFirstOpen(bookPath)) { //第一次打开
                 bufReader.read(args);
                 saveCacheToDb(bookPath, new String(args), 1);
@@ -220,7 +220,7 @@ public class DBManager {
                 bufReader.read(args);
                 saveCacheToDb(bookPath, new String(args), 1);
 
-            }else {//不是首页就skip
+            } else {//不是首页就skip
                 bufReader.skip(tmp);
                 bufReader.read(args);
                 saveCacheToDb(bookPath, new String(args), flags);
@@ -232,12 +232,12 @@ public class DBManager {
 
     protected String getBookFromDb(String bookPath, int skipNum, int flags) {
         String cache = "";
-        if (isNeedTocache(bookPath)) {
+        if (isNeedToCache(bookPath)) {
             switch (flags) {
                 case 1: {//向前阅读
                     cacheBook(bookPath, skipNum, flags);
                     if (isFirstOpen(bookPath))
-                    cache = getCacheHead(bookPath);
+                        cache = getCacheHead(bookPath);
                     break;
                 }
                 case 2: {//向后阅读
@@ -260,7 +260,7 @@ public class DBManager {
                     builder.append(len);
                 }
                 cache = builder.toString();
-                Log.d(TAG, "++++++++++++++++  cache 1 " + cache);
+                LogUtil.d("文件过小，未被Cache");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -269,13 +269,13 @@ public class DBManager {
     }
 
     protected boolean isFirstOpen(String bookPath) {
-        Log.d(TAG, "++++++++++++++   正在判断是否第一次打开 ");
+        LogUtil.d("正在判断是否第一次打开 ");
         String SQL_ISFIRST = "SELECT CACHE_BODY,CACHE_HEAD FROM BookInfo WHERE ADDRESS = ?";
         String args[] = new String[]{bookPath};
         Cursor cursor = db.rawQuery(SQL_ISFIRST, args);
         cursor.moveToFirst();
         boolean check = TextUtils.isEmpty(cursor.getString(cursor.getColumnIndex("CACHE_HEAD")));
-        Log.d(TAG, "++++++++++++++   是否第一次打开 " + check);
+        LogUtil.d("是否第一次打开 " + check);
 
         if (cursor != null)
             cursor.close();
