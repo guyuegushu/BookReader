@@ -3,11 +3,12 @@ package com.example.veb.bookreader;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+import java.io.UnsupportedEncodingException;
 
 /**
  * Created by VEB on 2016/10/25.
@@ -18,7 +19,7 @@ public class ReadBook extends Activity {
     private TextView display;
     private DBManager dbManager;
     private ScrollView scrollView;
-    private int flags = 1;
+    private int skipNum;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +28,18 @@ public class ReadBook extends Activity {
         dbManager = new DBManager(this);
         display = (TextView) findViewById(R.id.display);
         scrollView = (ScrollView) findViewById(R.id.scrollView);
-//        isTopOrButton();
+        skipNum = dbManager.getSkipNum(getBookPath());
+        init();
+        reading();
+    }
+
+    private void init(){
+        if (!dbManager.isFirstOpen(getBookPath())){
+
+            display.setText(getBookContent(skipNum));
+        } else {
+            LogUtil.d("不是第一次打开");
+        }
     }
 
     private String getBookPath() {
@@ -39,14 +51,33 @@ public class ReadBook extends Activity {
         return bookPath;
     }
 
-    
+    private String getBookContent(int localSkipNum) {
 
-    private void isTopOrButton() {
+        String cache = "";
+        try {
+            cache = new String(dbManager.openBook(getBookPath(), localSkipNum), "GB2312");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return cache;
+    }
+
+    private void isAheadTo() {
+        skipNum = skipNum - 1;
+        LogUtil.d("" + skipNum);
+    }
+
+    private void isBackwardTo() {
+        skipNum = skipNum + 1;
+        LogUtil.d("" + skipNum);
+    }
+
+    private void reading() {
         scrollView.setOnTouchListener(new View.OnTouchListener() {
-
             int totalMove = 0;
             int startY = 0;
             int endY = 0;
+            String cache = "";
 
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -54,23 +85,30 @@ public class ReadBook extends Activity {
                 int viewOutside = view.getScrollY();
                 int viewInside = view.getHeight();
                 int viewHeight = scrollView.getChildAt(0).getMeasuredHeight();
-
                 switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-
                         startY = (int) motionEvent.getY();
                         totalMove = 0;
                         return false;
 
                     case MotionEvent.ACTION_MOVE:
-
                         endY = (int) motionEvent.getY();
                         totalMove += endY - startY;
                         return false;
 
                     case MotionEvent.ACTION_UP:
-
                         if (viewOutside == 0) {//这里不能是getScrollY() <= 0
+                            if (dbManager.isFirstPage(skipNum)) {
+                                skipNum = 1;
+                                cache = getBookContent(skipNum);
+                                display.setText(cache);
+                            } else {
+                                isAheadTo();
+                                cache = getBookContent(skipNum);
+                                scrollView.scrollTo(0, viewHeight);
+                                display.setText(cache);
+                            }
+
 
                             //这里不能是 >=
                             // 原因：getScrollY()值不是绝对靠谱的，它会超过边界值，
@@ -78,7 +116,17 @@ public class ReadBook extends Activity {
                             // 仔细想想也感觉想得通，系统的ScrollView在处理滚动的时候动态计算
                             // 那个scrollY的时候也会出现超过边界再修正的情况
                         } else if (viewHeight == (viewOutside + viewInside)) {
-
+                            if (dbManager.isFirstPage(skipNum)) {
+                                isBackwardTo();
+                                cache = getBookContent(skipNum);
+                                scrollView.scrollTo(0, -viewHeight);
+                                display.setText(cache);
+                            } else {
+                                isBackwardTo();
+                                cache = getBookContent(skipNum);
+                                scrollView.scrollTo(0, -viewHeight);
+                                display.setText(cache);
+                            }
                         }
                         return false;
                     default:
@@ -89,75 +137,11 @@ public class ReadBook extends Activity {
         });
     }
 
-//    private void isTopOrButton() {
-//        scrollView.setOnTouchListener(new View.OnTouchListener() {
-//            int skipNum = 1;
-//            String tmp = "";
-//
-//            int totalMove = 0;
-//            int startY = 0;
-//            int endY = 0;
-//
-//            @Override
-//            public boolean onTouch(View view, MotionEvent motionEvent) {
-//
-//                int viewOutside = view.getScrollY();
-//                int viewInside = view.getHeight();
-//                int viewHeight = scrollView.getChildAt(0).getMeasuredHeight();
-//
-//                switch (motionEvent.getAction()) {
-//                    case MotionEvent.ACTION_DOWN:
-//                        startY = (int) motionEvent.getY();
-//                        totalMove = 0;
-//                        return false;
-//                    case MotionEvent.ACTION_MOVE:
-//                        endY = (int) motionEvent.getY();
-//                        totalMove += endY - startY;
-//                        return false;
-//                    case MotionEvent.ACTION_UP:
-//
-//                        dbManager.setSkipNum(getBookPath(), skipNum);
-//
-//                        if (viewOutside == 0) {//这里不能是getScrollY() <= 0
-//                            skipNum = dbManager.getSkipNum(getBookPath());
-//                            if (skipNum > 1) {//不是最开端
-//                                flags = 1;//向前阅读
-//                                skipNum -= 1;
-//                                tmp = dbManager.getBookFromDb(getBookPath(), skipNum, flags);
-//                                scrollView.scrollTo(0, viewHeight);//当不在最开端的时候进行滚动
-//                            } else {
-//                                flags = 2;//初始化
-//                                skipNum = 1;
-//                                tmp = dbManager.getBookFromDb(getBookPath(), skipNum, flags);
-//                            }
-//                            display.setText(tmp);
-//                            //这里不能是 >=
-//                            // 原因：getScrollY()值不是绝对靠谱的，它会超过边界值，
-//                            // 但是它自己会恢复正确，导致上面的计算条件不成立
-//                            // 仔细想想也感觉想得通，系统的ScrollView在处理滚动的时候动态计算
-//                            // 那个scrollY的时候也会出现超过边界再修正的情况
-//                        } else if (viewHeight == (viewOutside + viewInside)) {
-//                            skipNum = dbManager.getSkipNum(getBookPath());
-//                            if (skipNum > 1) {
-//                                flags = 2;//向后阅读
-//                                skipNum += 1;
-//                                tmp = dbManager.getBookFromDb(getBookPath(), skipNum, flags);
-//                                flags = 0;
-//                            } else {
-//                                flags = 1;
-//                                skipNum = 2;
-//                                tmp = dbManager.getBookFromDb(getBookPath(), skipNum, flags);
-//                            }
-//                            scrollView.scrollTo(0, -viewHeight);
-//                            display.setText(tmp);
-//                        }
-//                        return false;
-//                    default:
-//                        break;
-//                }
-//                return false;
-//            }
-//        });
-//    }
+    @Override
+    protected void onDestroy() {
 
+        dbManager.saveSkipNum(getBookPath(), skipNum);
+        LogUtil.d("" + skipNum);
+        super.onDestroy();
+    }
 }

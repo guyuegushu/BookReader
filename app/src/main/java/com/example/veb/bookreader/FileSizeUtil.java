@@ -67,4 +67,8 @@ public class FileSizeUtil {
         return return_size;
     }
 
+    public long partition(File file){
+        return DirSize(file) / (1024 * 8);
+    }
+
 }

@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +45,7 @@ public class DBManager {
         boolean check = true;
         FileSizeUtil fileSize = new FileSizeUtil();
         File file = new File(bookPath);
+
         try {
             long size = fileSize.DirSize(file);
             if (8192 >= size) {
@@ -57,22 +59,23 @@ public class DBManager {
         return check;
     }
 
-    private boolean isFirstOpen(String bookPath) {
-        LogUtil.d("正在判断是否第一次打开 ");
-        String SQL_ISFIRST = "SELECT CACHE_BODY,CACHE_HEAD FROM BookInfo WHERE ADDRESS = ?";
+    protected boolean isFirstOpen(String bookPath) {
+        String SQL_SKIP_NUM_EXIST = "SELECT SKIP_NUM FROM BookInfo WHERE ADDRESS=?";
         String args[] = new String[]{bookPath};
-        Cursor cursor = db.rawQuery(SQL_ISFIRST, args);
-        cursor.moveToFirst();
-        boolean check = TextUtils.isEmpty(cursor.getString(cursor.getColumnIndex("CACHE_HEAD")));
-        LogUtil.d("是否第一次打开 " + check);
-
-        if (cursor != null)
-            cursor.close();
-
-        return check;
+        Cursor cursor = db.rawQuery(SQL_SKIP_NUM_EXIST, args);
+        if (isCursorExist(cursor)) {
+            int check = cursor.getInt(cursor.getColumnIndex("SKIP_NUM"));
+            if (check == 1) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
 
-    private boolean isFirstPage(int skipNum) {
+    protected boolean isFirstPage(int skipNum) {
         if (skipNum == 1) {
             return true;
         } else {
@@ -97,12 +100,6 @@ public class DBManager {
             }
         }
         return skipNum;
-    }
-
-    protected void setSkipNum(String bookPath, int skipNum) {
-        String SQL_UPDATE_SKIP_NUM = "UPDATE BookInfo SET SKIP_NUM = ? WHERE ADDRESS = ?";
-        Object objects[] = new Object[]{skipNum, bookPath};
-        db.execSQL(SQL_UPDATE_SKIP_NUM, objects);
     }
 
     protected List<TxtFile> getNameList(File bookFiles) {
@@ -186,104 +183,39 @@ public class DBManager {
         return shelfList;
     }
 
-    private void saveCacheHead(String bookPath, String cache) {
-        ContentValues values = new ContentValues();
-        values.put("CACHE_HEAD", cache);
-        db.update("BookInfo", values, "ADDRESS = ?", new String[]{bookPath});
-    }
-
-    private void saveCacheBody(String bookPath, String cache) {
-        String SQL_UPDATE_CACHE_BODY = "UPDATE BookInfo " +
-                "SET CACHE_BODY = ?"
-                + " WHERE ADDRESS = ?";
-        Object args[] = new Object[]{cache, bookPath};
-        db.execSQL(SQL_UPDATE_CACHE_BODY, args);
-    }
-
-    private void saveCacheSkipNum(String bookPath, int skipNum){
-        String SQL_UPDATE_CACHE_SKIP_NUM = "UPDATE BookInfo " +
+    protected void saveSkipNum(String bookPath, int skipNum) {
+        String SQL_UPDATE_SKIP_NUM = "UPDATE BookInfo " +
                 "SET SKIP_NUM = ?"
                 + " WHERE ADDRESS = ?";
         Object args[] = new Object[]{skipNum, bookPath};
-        db.execSQL(SQL_UPDATE_CACHE_SKIP_NUM, args);
+        db.execSQL(SQL_UPDATE_SKIP_NUM, args);
     }
 
-    private String getCacheHead(String bookPath) {
-        String cache = "";
-        String SQL_HEAD_CACHE = "SELECT CACHE_HEAD FROM BookInfo WHERE ADDRESS = ?";
-        String[] args = new String[]{bookPath};
-        Cursor cursor = null;
+    protected byte[] openBook(String bookPath, int skipNum) {
+
+        size = new FileSizeUtil();
+        File file = new File(bookPath);
+        long max = size.partition(file);
+
+        long skipLength = (skipNum - 1) * (8 * 1024 - 300);
+        RandomAccessFile bookFile = null;
+        byte[] args = new byte[8 * 1024];
+
         try {
-            cursor = db.rawQuery(SQL_HEAD_CACHE, args);
-            if (isCursorExist(cursor)) {
-                cache = cursor.getString(cursor.getColumnIndex("CACHE_HEAD"));
-            } else {
-                LogUtil.d("HEAD_CACHE不存在");
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-        return cache;
-    }
 
-    private String getCacheBody(String bookPath) {
-        String cache = "";
-        String SQL_BODY_CACHE = "SELECT CACHE_BODY FROM BookInfo WHERE ADDRESS = ?";
-        String[] args = new String[]{bookPath};
-        Cursor cursor = null;
-        try {
-            cursor = db.rawQuery(SQL_BODY_CACHE, args);
-            if (isCursorExist(cursor)) {
-                cache = cursor.getString(cursor.getColumnIndex("CACHE_BODY"));
-            } else {
-                LogUtil.d("BODY_CACHE不存在");
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-        return cache;
-    }
+            bookFile = new RandomAccessFile(bookPath, "r");
 
-    private String openBookFromShelf(String bookPath) {
-        return getCacheHead(bookPath);
-    }
-
-    private void openBookFromBrowser(String bookPath) {
-        File bookFile = new File(bookPath);
-        int skipLength = getSkipNum(bookPath) * (8 * 1024 - 4);
-        BufferedInputStream bis = null;
-        BufferedReader bufReader = null;
-        try {
-            bis = new BufferedInputStream(new FileInputStream(bookFile));
-            bufReader = new BufferedReader(new InputStreamReader(bis, "GBK"));
-            char[] args = new char[8 * 1024];
-
-            if (isFirstOpen(bookPath)){
-                bufReader.read(args);
-                saveCacheHead(bookPath, new String(args));
-
-                bufReader.skip(8 * 1024 - 4);
-                bufReader.read(args);
-                saveCacheBody(bookPath, new String(args));
-            } else {
-
-                bufReader.skip(skipLength);
-                bufReader.read(args);
-                saveCacheBody(bookPath, new String(args));
-            }
-
+            LogUtil.d("在第" + skipNum + "部分");
+            bookFile.seek(skipLength);
+            bookFile.read(args);
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return args;
     }
 
     protected void delBookFromDb(String bookPath) {
@@ -291,97 +223,6 @@ public class DBManager {
         Object args[] = new Object[]{bookPath};
         db.execSQL(SQL_DELETE_BOOK, args);
     }
-
-//    private void cacheBook(String bookPath, int skipNum, int flags) {
-//
-//        File bookFile = new File(bookPath);
-//        int tmp = skipNum * (8 * 1024 - 4);
-//        try {
-//            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(bookFile));
-//            BufferedReader bufReader = new BufferedReader(new InputStreamReader(bis, "GBK"));
-//
-//            char[] args = new char[8 * 1024];
-//            LogUtil.d("准备判断是否第一次打开");
-//
-//            if (isFirstOpen(bookPath)) { //第一次打开
-//                bufReader.read(args);
-//                saveCacheToDb(bookPath, new String(args), 1);
-//
-//                bufReader.skip(8 * 1024 - 4);
-//                bufReader.read(args);
-//                saveCacheToDb(bookPath, new String(args), 2);
-//
-//            } else if (skipNum == 1) {//判断是否到达首页
-//                bufReader.read(args);
-//                saveCacheToDb(bookPath, new String(args), 1);
-//
-//            } else {//不是首页就skip
-//                bufReader.skip(tmp);
-//                bufReader.read(args);
-//                saveCacheToDb(bookPath, new String(args), flags);
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-
-//    protected String getBookFromDb(String bookPath, int skipNum, int flags) {
-//        String cache = "";
-//        if (isNeedToCache(bookPath)) {
-//            switch (flags) {
-//                case 1: {//向前阅读
-//                    cacheBook(bookPath, skipNum, flags);
-//                    if (isFirstOpen(bookPath))
-//                        cache = getCacheHead(bookPath);
-//                    break;
-//                }
-//                case 2: {//向后阅读
-//                    cacheBook(bookPath, skipNum, flags);
-//                    cache = getCacheBody(bookPath);
-//                    break;
-//                }
-//                default:
-//                    break;
-//            }
-//        } else {
-//
-//            try {
-//                File bookFile = new File(bookPath);
-//                BufferedInputStream bis = new BufferedInputStream(new FileInputStream(bookFile));
-//                BufferedReader bufReader = new BufferedReader(new InputStreamReader(bis, "GBK"));
-//                String len = "";
-//                StringBuilder builder = new StringBuilder();
-//                while ((len = bufReader.readLine()) != null) {
-//                    builder.append(len);
-//                }
-//                cache = builder.toString();
-//                LogUtil.d("文件过小，未被Cache");
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        return cache;
-//    }
-//    private void saveCacheToDb(String bookPath, String cache, int flags) {
-//        //这是没有考虑第一次加载的情况，不是在第一页，后面调用就需要考虑第一页
-//        switch (flags) {
-//            case 1: {//向前阅读
-//                ContentValues values = new ContentValues();
-//                values.put("CACHE_HEAD", cache);
-//                db.update("BookInfo", values, "ADDRESS = ?", new String[]{bookPath});
-//                break;
-//            }
-//
-//            case 2: {//向后阅读
-//                String SQL_UPDATE_CACHE_BODY = "UPDATE BookInfo " +
-//                        "SET CACHE_BODY = ?"
-//                        + " WHERE ADDRESS = ?";
-//                Object args[] = new Object[]{cache, bookPath};
-//                db.execSQL(SQL_UPDATE_CACHE_BODY, args);
-//                break;
-//            }
-//        }
-//    }
 
 }
 

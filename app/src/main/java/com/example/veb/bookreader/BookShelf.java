@@ -90,15 +90,6 @@ public class BookShelf extends Activity implements ClickListener {
         });
 
         builder.create().show();
-//        item.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
-//            @Override
-//            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-//                Log.d(TAG, "########################################   菜单弹出  ");
-//                menu.setHeaderTitle(R.string.shelf_menu_title);
-//                menu.add(0, 0, 0, R.string.shelf_menu_item_1);
-//                menu.add(0, 1, 0, R.string.shelf_menu_item_1);
-//            }
-//        });
     }
 
     @Override
@@ -107,15 +98,4 @@ public class BookShelf extends Activity implements ClickListener {
         setShelfListView();
     }
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        switch (requestCode){
-//            case RESULT_OK:
-//                setShelfListView();
-//                break;
-//            default:
-//                break;
-//        }
-//    }
 }
