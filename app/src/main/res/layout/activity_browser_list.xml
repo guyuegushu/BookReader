@@ -7,14 +7,15 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="50dp"
+        android:background="#04445F"
         android:gravity="center">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="45dp"
             android:gravity="center"
-            android:textSize="25sp"
-            android:text="@string/browser_title"/>
+            android:text="@string/browser_title"
+            android:textSize="25sp" />
 
     </LinearLayout>
 

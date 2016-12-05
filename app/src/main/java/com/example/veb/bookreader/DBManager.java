@@ -29,6 +29,7 @@ public class DBManager {
     private Context context;
     private SQLiteDatabase db;
     private FileSizeUtil size;
+    private CheckChineseUtil isChinese;
 
     public DBManager(Context context) {
         this.context = context;
@@ -193,11 +194,13 @@ public class DBManager {
 
     protected byte[] openBook(String bookPath, int skipNum) {
 
+        isChinese = new CheckChineseUtil();
         size = new FileSizeUtil();
         File file = new File(bookPath);
+
         long max = size.partition(file);
 
-        long skipLength = (skipNum - 1) * (8 * 1024 - 300);
+        long skipLength = (skipNum - 1) * (8 * 1024);
         RandomAccessFile bookFile = null;
         byte[] args = new byte[8 * 1024];
 
@@ -208,6 +211,10 @@ public class DBManager {
             LogUtil.d("在第" + skipNum + "部分");
             bookFile.seek(skipLength);
             bookFile.read(args);
+
+            if (isChinese.isChinese(args)) {
+
+            }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
