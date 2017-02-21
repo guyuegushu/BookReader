@@ -1,21 +1,54 @@
 apply plugin: 'com.android.application'
 
+def gitVersionCode() {
+    def cmd = 'git rev-list HEAD --first-parent --count'
+    cmd.execute().text.trim().toInteger()
+}
+
+def gitVersionTag() {
+    def cmd = 'git describe --tags'
+    def version = cmd.execute().text.trim()
+
+    def pattern = "-(\\d+)-g"
+    def matcher = version =~ pattern
+
+    if (matcher) {
+        version = version.substring(0, matcher.start()) + "." + matcher[0][1]
+    } else {
+        version = version + ".0"
+    }
+    return version
+}
+
 android {
     signingConfigs {
     }
-    compileSdkVersion 23
+    compileSdkVersion 25
     buildToolsVersion '23.0.3'
     defaultConfig {
         applicationId "com.example.veb.bookreader"
-        minSdkVersion 22
-        targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion 21
+        targetSdkVersion 25
+        versionCode gitVersionCode()
+        versionName gitVersionTag()
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+        }
+
         release {
-            minifyEnabled false
+            minifyEnabled true
+            proguardFiles 'proguard-rules.pro'
+            applicationVariants.all {
+                variant ->
+                    variant.outputs.each {
+                        output ->
+                            output.outputFile = new File(output.outputFile.parent,
+                                    output.outputFile.name.replace("app-release.apk", "BookReader_" + gitVersionTag() + ".apk"))
+                    }
+            }
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
