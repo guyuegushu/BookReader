@@ -24,6 +24,7 @@ public class ReadBook extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        MyActivityManager.getInstance().addActivity(ReadBook.this);
         setContentView(R.layout.activity_display);
         dbManager = new DBManager(this);
         display = (TextView) findViewById(R.id.display);
@@ -33,8 +34,8 @@ public class ReadBook extends Activity {
         reading();
     }
 
-    private void init(){
-        if (!dbManager.isFirstOpen(getBookPath())){
+    private void init() {
+        if (!dbManager.isFirstOpen(getBookPath())) {
 
             display.setText(getBookContent(skipNum));
         } else {

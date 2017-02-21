@@ -4,29 +4,54 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <LinearLayout
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/activity_browser_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="#04445F"
-        android:gravity="center">
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="45dp"
-            android:gravity="center"
-            android:text="@string/browser_title"
-            android:textSize="25sp" />
+    </android.support.v7.widget.Toolbar>
 
-    </LinearLayout>
+    <com.example.veb.bookreader.EditTextForSearch
+        android:id="@+id/search_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/search_edit"
+        android:hint="@string/search_hint"
+        android:textSize="18sp">
 
-    <LinearLayout
+    </com.example.veb.bookreader.EditTextForSearch>
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <ListView
             android:id="@+id/list"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </LinearLayout>
+            android:layout_height="match_parent"
+            android:divider="@null"/>
+
+        <TextView
+            android:id="@+id/letter_dialog"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:background="@drawable/show_head_toast_bg"
+            android:textColor="#fff"
+            android:visibility="invisible" />
+
+        <com.example.veb.bookreader.SideBar
+            android:id="@+id/sidebar"
+            android:layout_width="30dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end|center" />
+
+    </FrameLayout>
 
 </LinearLayout>

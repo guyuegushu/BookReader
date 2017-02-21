@@ -1,22 +1,17 @@
 package com.example.veb.bookreader;
 
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -103,21 +98,21 @@ public class DBManager {
         return skipNum;
     }
 
-    protected List<TxtFile> getNameList(File bookFiles) {
+    protected List<MyTxtInfo> getNameList(File bookFiles) {
 
-        List<TxtFile> browserList = new ArrayList<>();
+        List<MyTxtInfo> browserList = new ArrayList<>();
 
         File[] files = bookFiles.listFiles();
 
-        TxtFile txtFile = null;
+        MyTxtInfo myTxtInfo = null;
         if (files != null) {
             for (File f : files) {
                 if (f.isDirectory()) {
                     getNameList(f);//只需要txt
                 } else {
-                    txtFile = getTxtFileName(f);
-                    if (txtFile != null) {
-                        browserList.add(txtFile);
+                    myTxtInfo = getTxtFileName(f);
+                    if (myTxtInfo != null) {
+                        browserList.add(myTxtInfo);
                     } else {
                         LogUtil.d("文件不是文本文件");
                     }
@@ -129,26 +124,26 @@ public class DBManager {
         return browserList;
     }
 
-    private TxtFile getTxtFileName(File file) {
-        TxtFile txtFile = null;
+    private MyTxtInfo getTxtFileName(File file) {
+        MyTxtInfo myTxtInfo = null;
         String fileName = file.getName();
         size = new FileSizeUtil();
         if (fileName.endsWith(".txt")) {
             String fileSize = size.getFileOrDirSize(file);
-            txtFile = new TxtFile(file.getAbsolutePath(), fileName, fileSize);
+            myTxtInfo = new MyTxtInfo(file.getAbsolutePath(), fileName, fileSize);
         }
-        return txtFile;
+        return myTxtInfo;
     }
 
-    protected void saveShelfToDb(TxtFile txtFile) {
+    protected void saveShelfToDb(MyTxtInfo myTxtInfo) {
 
         String SQL_EXIST = "SELECT NAME, ADDRESS FROM BookInfo WHERE ADDRESS = ?";
-        Cursor cursor = db.rawQuery(SQL_EXIST, new String[]{txtFile.getTxtFilePath()});
+        Cursor cursor = db.rawQuery(SQL_EXIST, new String[]{myTxtInfo.getTxtPath()});
         if (!isCursorExist(cursor)) {//判断是否存在该书籍
             String SQL_INSERT_SHELF = "INSERT INTO BookInfo(" +
                     "NAME, ADDRESS, BOOK_SIZE) VALUES(?,?,?)";
             Object[] args = new Object[]{
-                    txtFile.getTxtFileName(), txtFile.getTxtFilePath(), txtFile.getTxtFileSize()
+                    myTxtInfo.getTxtName(), myTxtInfo.getTxtPath(), myTxtInfo.getTxtSize()
             };
             db.execSQL(SQL_INSERT_SHELF, args);
         } else {
@@ -156,9 +151,9 @@ public class DBManager {
         }
     }
 
-    protected List<TxtFile> getShelfFromDb() {
-        List<TxtFile> shelfList = new ArrayList<>();
-        TxtFile txtFile;
+    protected List<MyTxtInfo> getShelfFromDb() {
+        List<MyTxtInfo> shelfList = new ArrayList<>();
+        MyTxtInfo myTxtInfo;
 
         String SQL_QUERY = "SELECT NAME,ADDRESS,BOOK_SIZE FROM BookInfo";
         Cursor cursor = db.rawQuery(SQL_QUERY, null);
@@ -167,8 +162,8 @@ public class DBManager {
                 String fileName = cursor.getString(cursor.getColumnIndex("NAME"));
                 String filePath = cursor.getString(cursor.getColumnIndex("ADDRESS"));
                 String fileSize = cursor.getString(cursor.getColumnIndex("BOOK_SIZE"));
-                txtFile = new TxtFile(filePath, fileName, fileSize);
-                shelfList.add(txtFile);
+                myTxtInfo = new MyTxtInfo(filePath, fileName, fileSize);
+                shelfList.add(myTxtInfo);
             } while (cursor.moveToNext());
         } else {
             ToastUtil.showToast(GlobalApplication.getContext(), "书架是空的，请选择书籍", 0);
@@ -204,6 +199,7 @@ public class DBManager {
         RandomAccessFile bookFile = null;
         byte[] args = new byte[8 * 1024];
 
+
         try {
 
             bookFile = new RandomAccessFile(bookPath, "r");
@@ -229,6 +225,27 @@ public class DBManager {
         String SQL_DELETE_BOOK = "DELETE FROM BookInfo WHERE ADDRESS = ?";
         Object args[] = new Object[]{bookPath};
         db.execSQL(SQL_DELETE_BOOK, args);
+    }
+
+    public void updateListView(String filterStr, List<MyTxtInfo> mList, MyComparatorAdapter adapter) {
+
+        PinyinComparator comparator = new PinyinComparator();
+        List<MyTxtInfo> updateData = new ArrayList<>();
+
+        if (TextUtils.isEmpty(filterStr)) {
+            updateData = mList;
+        } else {
+            updateData.clear();
+            for (MyTxtInfo info : mList) {
+                if (info.getTxtName().contains(filterStr)
+                        || GlobalApplication.getParser().
+                        getSelling(info.getTxtName()).startsWith(filterStr)) {
+                    updateData.add(info);
+                }
+            }
+        }
+        Collections.sort(updateData, comparator);
+        adapter.update(updateData);
     }
 
 }

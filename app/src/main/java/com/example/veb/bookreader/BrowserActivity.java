@@ -1,57 +1,154 @@
 package com.example.veb.bookreader;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.ContextMenu;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Created by VEB on 2016/10/9.
  */
-public class BrowserActivity extends Activity implements ClickListener {
+public class BrowserActivity extends AppCompatActivity implements ClickListener {
 
-    private final static String TAG = "BrowserActivity";
     private DBManager dbManager;
     private ListView mListView;
-    private List<TxtFile> mList = new ArrayList<>();
+    private List<MyTxtInfo> mList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        MyActivityManager.getInstance().addActivity(BrowserActivity.this);
         setContentView(R.layout.activity_browser_list);
+        initToolBar();
+        initOtherView();
+    }
+
+    MyComparatorAdapter adapter;
+
+    private void initOtherView() {
         dbManager = new DBManager(this);
         mListView = (ListView) findViewById(R.id.list);
+
         String txtPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/TxtBook";
         File file = new File(txtPath);
+
         if (!file.exists()) {
             boolean isMkdirs = file.mkdirs();
             if (isMkdirs) {
                 ToastUtil.showToast(this, R.string.mkDir, 0);
-                mList = null;
+                mList = dbManager.getNameList(file);
             } else
                 ToastUtil.showToast(this, R.string.mkDirEr, 0);
         } else {
-            Log.d(TAG, "=================文件已存在");
             mList = dbManager.getNameList(file);
         }
-        TxtAdapter adapter = new TxtAdapter(BrowserActivity.this, mList, BrowserActivity.this);
+
+        adapter = new MyComparatorAdapter(BrowserActivity.this, mList, BrowserActivity.this);
+
+        PinyinComparator comparator = new PinyinComparator();
+        final SideBar sideBar = (SideBar) findViewById(R.id.sidebar);
+        final TextView dialog = (TextView) findViewById(R.id.letter_dialog);
+        sideBar.setTextView(dialog);
+
+        Collections.sort(mList, comparator);
+
+        List<String> list = new ArrayList<>();
+        for (int i = 0; i < mList.size(); i++) {
+            list.add(mList.get(i).getLetterHead());
+        }
+
+        sideBar.setExistLetter(list);//输入已经存在的字母列表
+
         mListView.setAdapter(adapter);
+
+        EditTextForSearch search = (EditTextForSearch) findViewById(R.id.search_bar);
+        search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                dbManager.updateListView(s.toString(), mList, adapter);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        sideBar.setOnTouchingLetterChangedListener(new SideBar.OnTouchingLetterChangedListener() {
+            @Override
+            public void onTouchingLetterChanged(String str) {
+                int position = adapter.getPositionForSection(str.charAt(0));
+                if (position != -1) {
+                    mListView.setSelection(position);
+                }
+            }
+        });
+    }
+
+    public void initToolBar() {
+        Toolbar toolbar = (Toolbar) findViewById(R.id.activity_browser_toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setSubtitle(R.string.browser_small_title);
+        setTitle(R.string.browser_title);
+        toolbar.setLogo(R.drawable.browser_icon);
+
+
+        //在设置toolbar之后，否则没有回退效果
+        toolbar.setNavigationIcon(R.drawable.return_icon);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_browser, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.a1:
+                ToastUtil.showToast(this, R.string.waiting_add, 0);
+                return true;
+            case R.id.a2:
+                ToastUtil.showToast(this, R.string.waiting_add, 0);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
     public void onClicks(View item, View widget, int position, int which) {
-        TxtFile txtFile = mList.get(position);
-        String bookPath = txtFile.getTxtFilePath();
-        Log.d(TAG, "####################### " + bookPath);
-        dbManager.saveShelfToDb(txtFile);
+        MyTxtInfo myTxtInfo = mList.get(position);
+        String bookPath = myTxtInfo.getTxtPath();
+        dbManager.saveShelfToDb(myTxtInfo);
         Intent display = new Intent(this, ReadBook.class);
         display.putExtra("bookPath", bookPath);
         startActivity(display);
@@ -59,11 +156,9 @@ public class BrowserActivity extends Activity implements ClickListener {
 
     @Override
     public void onLongClicks(View item, View parents, int position, int ids) {
-        Log.e(TAG, "########################################     长按生效   ");
         parents.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
             @Override
             public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                Log.e(TAG, "########################################   菜单生效   ");
                 menu.setHeaderTitle(R.string.shelf_menu_title);
                 menu.add(0, 0, 0, R.string.shelf_menu_item_1);
                 menu.add(0, 1, 0, R.string.shelf_menu_item_1);
@@ -71,4 +166,6 @@ public class BrowserActivity extends Activity implements ClickListener {
         });
 
     }
+
+
 }

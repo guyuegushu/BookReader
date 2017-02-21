@@ -12,11 +12,16 @@
     <string name="isEmpty">目录为空</string>
     <string name="book_cache">BookCache</string>
     <string name="browser_title">本地文件浏览器</string>
+    <string name="browser_small_title">本地书籍列表</string>
     <string name="shelf_menu_title">书籍操作</string>
     <string name="shelf_menu_item_1">删除</string>
     <string name="shelf_dialog_title">是否删除</string>
     <string name="shelf_dialog_content">提示</string>
     <string name="shelf_dialog_yes">是</string>
     <string name="shelf_dialog_no">否</string>
+    <string name="shelf_small_title">浏览</string>
+
+    <string name="waiting_add">等我慢慢来开发</string>
+    <string name="search_hint">请输入检索关键字</string>
 
 </resources>

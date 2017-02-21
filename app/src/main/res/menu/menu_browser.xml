@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <!--这个app是必须的-->
+
+    <!--显示出来的才有图标-->
+    <item
+        android:id="@+id/a1"
+        android:orderInCategory="10"
+        android:icon="@drawable/homepage_icon"
+        android:title="@string/app_name"
+        app:showAsAction="ifRoom"
+        />
+
+    <item android:id="@+id/a2"
+        android:icon="@drawable/homepage_icon"
+        android:title="@string/book_cache"
+        app:showAsAction="never"/>
+</menu>

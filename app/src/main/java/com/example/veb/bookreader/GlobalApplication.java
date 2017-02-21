@@ -9,17 +9,20 @@ import android.content.Context;
 public class GlobalApplication extends Application {
 
     private static Context context;
-
-
+    private static CharacterParser parser;
 
     @Override
     public void onCreate() {
         super.onCreate();
         context = getApplicationContext();
+        parser = CharacterParser.getInstance();
     }
 
     public static Context getContext() {
         return context;
+    }
+    public static CharacterParser getParser() {
+        return parser;
     }
 
 }
