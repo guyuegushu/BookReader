@@ -1,17 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="70dp"
+    android:layout_height="85dp"
+    android:background="#fff"
     android:orientation="vertical">
 
     <TextView
         android:id="@+id/letter_head"
         android:layout_width="match_parent"
-        android:layout_height="20dp" />
+        android:layout_height="20dp"
+        android:layout_marginTop="10dp"
+        android:background="#ccc"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="50dp"
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="5dp"
         android:gravity="bottom"
         android:orientation="horizontal">
 
@@ -19,13 +25,14 @@
             android:id="@+id/list_item_image"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:src="@drawable/book_icon"/>
+            android:src="@drawable/book_icon" />
 
         <TextView
             android:id="@+id/list_item_name"
             android:layout_width="100dp"
             android:layout_height="30dp"
             android:layout_marginBottom="3dp"
+            android:layout_marginStart="10dp"
             android:gravity="bottom"
             android:text="@string/file_name"
             android:textSize="18sp" />

@@ -131,6 +131,8 @@ public class DBManager {
         if (fileName.endsWith(".txt")) {
             String fileSize = size.getFileOrDirSize(file);
             myTxtInfo = new MyTxtInfo(file.getAbsolutePath(), fileName, fileSize);
+            myTxtInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
+            LogUtil.e(fileName);
         }
         return myTxtInfo;
     }
@@ -163,6 +165,7 @@ public class DBManager {
                 String filePath = cursor.getString(cursor.getColumnIndex("ADDRESS"));
                 String fileSize = cursor.getString(cursor.getColumnIndex("BOOK_SIZE"));
                 myTxtInfo = new MyTxtInfo(filePath, fileName, fileSize);
+                myTxtInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
                 shelfList.add(myTxtInfo);
             } while (cursor.moveToNext());
         } else {
@@ -238,8 +241,7 @@ public class DBManager {
             updateData.clear();
             for (MyTxtInfo info : mList) {
                 if (info.getTxtName().contains(filterStr)
-                        || GlobalApplication.getParser().
-                        getSelling(info.getTxtName()).startsWith(filterStr)) {
+                        || PinyinUtil.converterToFirstSpell(info.getTxtName()).startsWith(filterStr)) {
                     updateData.add(info);
                 }
             }

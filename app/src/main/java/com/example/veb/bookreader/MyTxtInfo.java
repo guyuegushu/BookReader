@@ -13,7 +13,6 @@ public class MyTxtInfo {
         this.txtPath = txtPath;
         this.txtName = txtName;
         this.txtSize = txtSize;
-        LetterHead();
     }
 
     public String getTxtPath() {
@@ -32,18 +31,14 @@ public class MyTxtInfo {
         return letterHead;
     }
 
-    public void setLetterHead(String letterHead) {
-        this.letterHead = letterHead;
-    }
+    public void setLetterHead(String pinyin) {
+        String sortString = pinyin.substring(0, 1).toUpperCase();
 
-    private void LetterHead() {
-        String pinyin = GlobalApplication.getParser().getSelling(getTxtName());
-        String firstLetter = pinyin.substring(0,1).toUpperCase();
-
-        if (firstLetter.matches("[A-Z]")) {
-            setLetterHead(firstLetter);
+        if (sortString.matches("[A-Z]")) {
+            letterHead = sortString;
         } else {
-            setLetterHead("#");
+            letterHead = "#";
         }
     }
+
 }

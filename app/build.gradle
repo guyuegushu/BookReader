@@ -62,5 +62,6 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile 'com.android.support:appcompat-v7:25.0.0'
+    compile files('libs/pinyin4j-2.5.0.jar')
     testCompile 'junit:junit:4.12'
 }
