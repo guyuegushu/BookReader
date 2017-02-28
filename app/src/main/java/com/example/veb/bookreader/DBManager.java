@@ -169,7 +169,7 @@ public class DBManager {
                 shelfList.add(myTxtInfo);
             } while (cursor.moveToNext());
         } else {
-            ToastUtil.showToast(GlobalApplication.getContext(), "书架是空的，请选择书籍", 0);
+//            ToastUtil.showToast(GlobalApplication.getContext(), "书架是空的，请选择书籍", 0);
         }
 
         try {

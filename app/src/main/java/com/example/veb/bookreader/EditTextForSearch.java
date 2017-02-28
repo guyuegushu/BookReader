@@ -60,6 +60,7 @@ public class EditTextForSearch extends EditText implements OnFocusChangeListener
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+
         if (getCompoundDrawables()[2] != null) {
             int right = getWidth() - getPaddingRight() - cancelDrawable.getIntrinsicWidth();
             int left = getWidth() - getPaddingRight();
@@ -92,12 +93,13 @@ public class EditTextForSearch extends EditText implements OnFocusChangeListener
     @Override
     public void onFocusChange(View v, boolean hasFocus) {
 
-        if (hasFocus) {
-            setCancelDrawableVisible((getText().length() > 0));
-        } else {
-            setCancelDrawableVisible(false);
-        }
-    }
+        setCancelDrawableVisible((getText().length() > 0));
 
+//        if (hasFocus) {
+//            setCancelDrawableVisible((getText().length() > 0));
+//        } else {
+//            setCancelDrawableVisible(false);
+//        }
+    }
 
 }
