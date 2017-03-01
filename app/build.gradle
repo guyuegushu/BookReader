@@ -24,9 +24,9 @@ android {
     signingConfigs {
     }
     compileSdkVersion 25
-    buildToolsVersion '23.0.3'
+    buildToolsVersion "25.0.0"
     defaultConfig {
-        applicationId "com.example.veb.bookreader"
+        applicationId "guyuegushu.myownapp"
         minSdkVersion 21
         targetSdkVersion 25
         versionCode gitVersionCode()
