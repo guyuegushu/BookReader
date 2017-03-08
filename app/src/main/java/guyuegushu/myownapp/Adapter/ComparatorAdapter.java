@@ -1,4 +1,4 @@
-package guyuegushu.myownapp.StaticGlobal;
+package guyuegushu.myownapp.Adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,7 +9,7 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import guyuegushu.myownapp.Interface.ClickListener;
-import guyuegushu.myownapp.Model.MyTxtInfo;
+import guyuegushu.myownapp.Model.MyItemInfo;
 import guyuegushu.myownapp.R;
 
 import java.util.List;
@@ -18,20 +18,20 @@ import java.util.List;
  * Created by guyuegushu on 2016/10/11.
  *
  */
-public class MyComparatorAdapter extends BaseAdapter implements SectionIndexer {
+public class ComparatorAdapter extends BaseAdapter implements SectionIndexer {
 
-    private List<MyTxtInfo> mList;
+    private List<MyItemInfo> mList;
     private LayoutInflater mInflater;
     private ClickListener mListener;
 
-    public MyComparatorAdapter(Context context, List<MyTxtInfo> data, ClickListener clickListener) {
+    public ComparatorAdapter(Context context, List<MyItemInfo> data, ClickListener clickListener) {
 
         mListener = clickListener;
         mInflater = LayoutInflater.from(context);
         mList = data;
     }
 
-    public void update(List<MyTxtInfo> list) {
+    public void update(List<MyItemInfo> list) {
         mList = list;
         notifyDataSetChanged();
     }
@@ -53,7 +53,7 @@ public class MyComparatorAdapter extends BaseAdapter implements SectionIndexer {
 
     @Override
     public View getView(int position, View convertView, final ViewGroup parent) {
-        MyTxtInfo tmp = mList.get(position);
+        MyItemInfo tmp = mList.get(position);
         Holder holder = null;
         if (convertView == null) {
             convertView = mInflater.inflate(R.layout.list_item, null);
@@ -74,8 +74,8 @@ public class MyComparatorAdapter extends BaseAdapter implements SectionIndexer {
             holder.letterHead.setVisibility(View.GONE);
         }
 
-        holder.textName.setText(tmp.getTxtName());
-        holder.textSize.setText(String.valueOf(tmp.getTxtSize()));
+        holder.textName.setText(tmp.getName());
+        holder.textSize.setText(String.valueOf(tmp.getSize()));
 
         final View view = convertView;
         final int p = position;

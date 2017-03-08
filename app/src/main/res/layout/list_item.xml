@@ -30,9 +30,11 @@
         <TextView
             android:id="@+id/list_item_name"
             android:layout_width="100dp"
-            android:layout_height="30dp"
+            android:layout_height="match_parent"
             android:layout_marginBottom="3dp"
             android:layout_marginStart="10dp"
+            android:maxLines="1"
+            android:ellipsize="middle"
             android:gravity="bottom"
             android:text="@string/file_name"
             android:textSize="18sp" />
@@ -40,9 +42,9 @@
         <TextView
             android:id="@+id/list_item_size"
             android:layout_width="70dp"
-            android:layout_height="30dp"
+            android:layout_height="match_parent"
             android:layout_marginBottom="3dp"
-            android:gravity="bottom"
+            android:gravity="bottom|end"
             android:text="@string/file_size"
             android:textSize="13sp" />
     </LinearLayout>

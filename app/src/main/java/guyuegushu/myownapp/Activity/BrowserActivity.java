@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
@@ -18,15 +20,16 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import guyuegushu.myownapp.Adapter.ComparatorAdapter;
 import guyuegushu.myownapp.Dao.DBManager;
 import guyuegushu.myownapp.Interface.ClickListener;
-import guyuegushu.myownapp.Model.MyTxtInfo;
+import guyuegushu.myownapp.Model.MyItemInfo;
 import guyuegushu.myownapp.OverrideView.EditTextForSearch;
 import guyuegushu.myownapp.OverrideView.SideBar;
 import guyuegushu.myownapp.R;
 import guyuegushu.myownapp.StaticGlobal.MyActivityManager;
-import guyuegushu.myownapp.StaticGlobal.MyComparatorAdapter;
 import guyuegushu.myownapp.StaticGlobal.PinyinComparator;
+import guyuegushu.myownapp.Util.PinyinUtil;
 import guyuegushu.myownapp.Util.ToastUtil;
 
 import java.io.File;
@@ -36,87 +39,78 @@ import java.util.List;
 
 /**
  * Created by guyuegushu on 2016/10/9.
- *
+ * 现在是单独的txt浏览器
  */
 public class BrowserActivity extends AppCompatActivity implements ClickListener {
 
     private DBManager dbManager;
+    private List<MyItemInfo> mList;
     private ListView mListView;
-    private List<MyTxtInfo> mList = new ArrayList<>();
+
+    private Handler handler = new Handler() {
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 1001:
+
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         MyActivityManager.getInstance().addActivity(BrowserActivity.this);
         setContentView(R.layout.activity_browser_list);
-        initToolBar();
-        initOtherView();
-//        registerForContextMenu(mListView);
-    }
 
-    private MyComparatorAdapter adapter;
-    private EditTextForSearch search;
-
-    private void initOtherView() {
         dbManager = new DBManager(this);
         mListView = (ListView) findViewById(R.id.list);
+        mList = initBrowser();
 
-        String txtPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/TxtBook";
-        final File file = new File(txtPath);
+        initToolBar();
+        initAllView();
+    }
 
-        if (!file.exists()) {
-            boolean isMkdirs = file.mkdirs();
-            if (isMkdirs) {
-                ToastUtil.showToast(this, R.string.mkDir, 0);
-                mList = dbManager.getNameList(file);
-            } else
-                ToastUtil.showToast(this, R.string.mkDirEr, 0);
+    private ComparatorAdapter adapter;
+    private EditTextForSearch search;
+
+    private List<MyItemInfo> initBrowser() {
+        String finalRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
+        return childFileFromPath(finalRoot);
+    }
+
+    private void initAllView() {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            initListView(mList);
+            initSideBar(mList);
+            initSearchView(mList);
         } else {
-            mList = dbManager.getNameList(file);
+            ToastUtil.showToast(BrowserActivity.this, R.string.sdcard_not_exist, 0);
         }
 
-        adapter = new MyComparatorAdapter(BrowserActivity.this, mList, BrowserActivity.this);
+    }
+
+    private void initListView(List<MyItemInfo> defaultList) {
 
         PinyinComparator comparator = new PinyinComparator();
+        Collections.sort(defaultList, comparator);
+        adapter = new ComparatorAdapter(BrowserActivity.this, defaultList, BrowserActivity.this);
+        mListView.setAdapter(adapter);
+    }
+
+    private void initSideBar(List<MyItemInfo> defaultList) {
+
+        adapter = new ComparatorAdapter(BrowserActivity.this, defaultList, BrowserActivity.this);
+
+        List<String> list = new ArrayList<>();
+        for (int i = 0; i < defaultList.size(); i++) {
+            list.add(defaultList.get(i).getLetterHead());
+        }
         final SideBar sideBar = (SideBar) findViewById(R.id.sidebar);
         final TextView dialog = (TextView) findViewById(R.id.letter_dialog);
         sideBar.setTextView(dialog);
-
-        Collections.sort(mList, comparator);
-
-        List<String> list = new ArrayList<>();
-        for (int i = 0; i < mList.size(); i++) {
-            list.add(mList.get(i).getLetterHead());
-        }
-
         sideBar.setExistLetter(list);//输入已经存在的字母列表
-
-        mListView.setAdapter(adapter);
-
-        search = (EditTextForSearch) findViewById(R.id.search_bar);
-
-        if (getLastCustomNonConfigurationInstance() != null) {
-            String lastWord = (String) getLastCustomNonConfigurationInstance();
-            search.setText(lastWord);
-            dbManager.updateListView(lastWord, mList, adapter);
-        }
-        search.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                dbManager.updateListView(s.toString(), mList, adapter);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-
         sideBar.setOnTouchingLetterChangedListener(new SideBar.OnTouchingLetterChangedListener() {
             @Override
             public void onTouchingLetterChanged(String str) {
@@ -128,14 +122,40 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
         });
     }
 
+    private void initSearchView(final List<MyItemInfo> defaultList) {
+        adapter = new ComparatorAdapter(BrowserActivity.this, defaultList, BrowserActivity.this);
+
+        search = (EditTextForSearch) findViewById(R.id.search_bar);
+        if (getLastCustomNonConfigurationInstance() != null) {
+            String lastWord = (String) getLastCustomNonConfigurationInstance();
+            search.setText(lastWord);
+            dbManager.updateListView(lastWord, defaultList, adapter);
+        }
+
+        search.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                dbManager.updateListView(s.toString(), defaultList, adapter);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+    }
+
     public void initToolBar() {
         Toolbar toolbar = (Toolbar) findViewById(R.id.activity_browser_toolbar);
         setSupportActionBar(toolbar);
         toolbar.setSubtitle(R.string.browser_small_title);
         setTitle(R.string.browser_title);
         toolbar.setLogo(R.drawable.browser_icon);
-
-
         //在设置toolbar之后，否则没有回退效果
         toolbar.setNavigationIcon(R.drawable.return_icon);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -164,18 +184,24 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
 
     @Override
     public void onClicks(View item, View widget, int position, int which) {
-        MyTxtInfo myTxtInfo = mList.get(position);
-        String bookPath = myTxtInfo.getTxtPath();
-        dbManager.saveShelfToDb(myTxtInfo);
-        Intent display = new Intent(this, ReadBook.class);
-        display.putExtra("bookPath", bookPath);
-        startActivity(display);
+        MyItemInfo info = mList.get(position);
+
+        if (info.getName().endsWith(".txt")) {
+            String bookPath = info.getPath();
+            dbManager.saveShelfToDb(info);
+            Intent display = new Intent(this, ReadBook.class);
+            display.putExtra("bookPath", bookPath);
+            startActivity(display);
+        } else {
+            mList = childFileFromPath(info.getPath());
+            initAllView();
+        }
     }
 
     @Override
     public void onLongClicks(View item, View parents, int position, int ids) {
 
-        final String bookPath = mList.get(position).getTxtPath();
+        final String bookPath = mList.get(position).getPath();
         final File file = new File(bookPath);
         AlertDialog.Builder builder = new AlertDialog.Builder(BrowserActivity.this);
         builder.setMessage(R.string.shelf_dialog_title);
@@ -187,7 +213,7 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
                 if (file.exists() && file != null) {
                     file.delete();
                 }
-                initOtherView();
+                initAllView();
             }
         });
         builder.setNegativeButton(R.string.shelf_dialog_no, new DialogInterface.OnClickListener() {
@@ -238,4 +264,50 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
 
         return super.dispatchTouchEvent(ev);
     }
+
+    public String nameFromPath(String absolutePath) {
+        String name = null;
+        int desPosition = absolutePath.lastIndexOf('/');
+        if (desPosition != -1) {
+            name = absolutePath.substring(desPosition + 1, absolutePath.length());
+        }
+        return name;
+    }
+
+    public List<MyItemInfo> childFileFromPath(String absolutePath) {
+        List<MyItemInfo> childList = new ArrayList<>();
+        File root = new File(absolutePath);
+        if (!root.exists()) {
+            childList = null;
+        } else {
+            File[] childFiles = root.listFiles();
+            if (childFiles == null) {
+                childList = null;
+            } else {
+                MyItemInfo info = null;
+                MyItemInfo.Builder builder = null;
+                for (File child : childFiles) {
+                    String path = child.getAbsolutePath();
+                    builder = new MyItemInfo.Builder();
+                    info = builder
+                            .name(nameFromPath(path))
+                            .path(path)
+                            .build();
+                    info.setLetterHead(PinyinUtil.converterToFirstSpell(nameFromPath(path)));
+                    childList.add(info);
+                }
+            }
+        }
+        return childList;
+    }
+
+    public List<MyItemInfo> parentFileFromPath(String absolutePath) {
+        int desPosition = absolutePath.lastIndexOf('/');
+        if (desPosition != -1) {
+            absolutePath = absolutePath.substring(0, desPosition + 1);
+            return childFileFromPath(absolutePath);
+        }
+        return null;
+    }
+
 }

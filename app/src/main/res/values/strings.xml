@@ -6,6 +6,7 @@
     <string name="create_db">正在创建数据库&#8230;</string>
     <string name="file_name">文件名</string>
     <string name="file_size">文件大小</string>
+    <string name="sdcard_not_exist">内存卡不存在</string>
     <string name="mkDir">创建文件夹成功</string>
     <string name="mkDirEr">创建文件夹失败</string>
     <string name="isExist">文件已存在</string>

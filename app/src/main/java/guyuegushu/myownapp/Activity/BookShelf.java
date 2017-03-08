@@ -13,22 +13,22 @@ import android.widget.ListView;
 
 import guyuegushu.myownapp.Dao.DBManager;
 import guyuegushu.myownapp.Interface.ClickListener;
-import guyuegushu.myownapp.Model.MyTxtInfo;
+import guyuegushu.myownapp.Model.MyItemInfo;
 import guyuegushu.myownapp.R;
 import guyuegushu.myownapp.StaticGlobal.MyActivityManager;
-import guyuegushu.myownapp.StaticGlobal.MyComparatorAdapter;
+import guyuegushu.myownapp.Adapter.ComparatorAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by guyuegushu on 2016/10/11.
- *
+ * 书架功能，显示曾经看过的书籍，可以长按删除，但是暂时不支持直接删除源文件
  */
 public class BookShelf extends AppCompatActivity implements ClickListener {
 
     private DBManager dbManager;
-    private List<MyTxtInfo> shelfList;
+    private List<MyItemInfo> shelfList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +87,7 @@ public class BookShelf extends AppCompatActivity implements ClickListener {
 
         ListView shelfListView = (ListView) findViewById(R.id.shelf);
         shelfList = dbManager.getShelfFromDb();
-        MyComparatorAdapter shelfAdapter = new MyComparatorAdapter(this, shelfList, this);
+        ComparatorAdapter shelfAdapter = new ComparatorAdapter(this, shelfList, this);
         shelfListView.setAdapter(shelfAdapter);
     }
 
@@ -101,7 +101,7 @@ public class BookShelf extends AppCompatActivity implements ClickListener {
      */
     @Override
     public void onClicks(View item, View widget, int position, int which) {
-        String bookPath = shelfList.get(position).getTxtPath();
+        String bookPath = shelfList.get(position).getPath();
         Intent shelfIntent = new Intent(this, ReadBook.class);
         shelfIntent.putExtra("bookPath", bookPath);
         startActivityForResult(shelfIntent, RESULT_OK);
@@ -117,7 +117,7 @@ public class BookShelf extends AppCompatActivity implements ClickListener {
      */
     @Override
     public void onLongClicks(View item, View parents, int position, int ids) {
-        final String bookPath = shelfList.get(position).getTxtPath();
+        final String bookPath = shelfList.get(position).getPath();
         AlertDialog.Builder builder = new AlertDialog.Builder(BookShelf.this);
         builder.setMessage(R.string.shelf_dialog_title);
         builder.setTitle(R.string.shelf_dialog_content);

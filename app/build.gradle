@@ -46,7 +46,7 @@ android {
                     variant.outputs.each {
                         output ->
                             output.outputFile = new File(output.outputFile.parent,
-                                    output.outputFile.name.replace("app-release.apk", "BookReader_" + gitVersionTag() + ".apk"))
+                                    output.outputFile.name.replace("app-release.apk", "MyOwnApp_" + gitVersionTag() + ".apk"))
                     }
             }
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

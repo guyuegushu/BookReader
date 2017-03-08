@@ -1,6 +1,6 @@
 package guyuegushu.myownapp.StaticGlobal;
 
-import guyuegushu.myownapp.Model.MyTxtInfo;
+import guyuegushu.myownapp.Model.MyItemInfo;
 
 import java.util.Comparator;
 
@@ -9,9 +9,9 @@ import java.util.Comparator;
  *
  */
 
-public class PinyinComparator implements Comparator<MyTxtInfo> {
+public class PinyinComparator implements Comparator<MyItemInfo> {
     @Override
-    public int compare(MyTxtInfo lhs, MyTxtInfo rhs) {
+    public int compare(MyItemInfo lhs, MyItemInfo rhs) {
         if (lhs.getLetterHead().equals("#")) {
             return 1;
         } else if (rhs.getLetterHead().equals("#")) {

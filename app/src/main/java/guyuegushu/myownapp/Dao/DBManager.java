@@ -6,9 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 
-import guyuegushu.myownapp.Model.MyTxtInfo;
+import guyuegushu.myownapp.Model.MyItemInfo;
 import guyuegushu.myownapp.R;
-import guyuegushu.myownapp.StaticGlobal.MyComparatorAdapter;
+import guyuegushu.myownapp.Adapter.ComparatorAdapter;
 import guyuegushu.myownapp.StaticGlobal.PinyinComparator;
 import guyuegushu.myownapp.Util.CheckChineseUtil;
 import guyuegushu.myownapp.Util.FileSizeUtil;
@@ -35,12 +35,14 @@ public class DBManager {
     private SQLiteDatabase db;
     private FileSizeUtil size;
     private CheckChineseUtil isChinese;
+    private MyItemInfo.Builder builder;
 
     public DBManager(Context context) {
         this.context = context;
         //创建数据库
         DatabaseHelper dbHelper = new DatabaseHelper(context);
         db = dbHelper.getWritableDatabase();
+        builder = new MyItemInfo.Builder();
     }
 
     private boolean isCursorExist(Cursor cursor) {
@@ -108,21 +110,21 @@ public class DBManager {
         return skipNum;
     }
 
-    public List<MyTxtInfo> getNameList(File bookFiles) {
+    public List<MyItemInfo> getNameList(File bookFiles) {
 
-        List<MyTxtInfo> browserList = new ArrayList<>();
+        List<MyItemInfo> browserList = new ArrayList<>();
 
         File[] files = bookFiles.listFiles();
 
-        MyTxtInfo myTxtInfo = null;
+        MyItemInfo myItemInfo = null;
         if (files != null) {
             for (File f : files) {
                 if (f.isDirectory()) {
                     getNameList(f);//只需要txt
                 } else {
-                    myTxtInfo = getTxtFileName(f);
-                    if (myTxtInfo != null) {
-                        browserList.add(myTxtInfo);
+                    myItemInfo = getTxtFileName(f);
+                    if (myItemInfo != null) {
+                        browserList.add(myItemInfo);
                     } else {
                         LogUtil.d("文件不是文本文件");
                     }
@@ -134,28 +136,31 @@ public class DBManager {
         return browserList;
     }
 
-    private MyTxtInfo getTxtFileName(File file) {
-        MyTxtInfo myTxtInfo = null;
+    private MyItemInfo getTxtFileName(File file) {
+        MyItemInfo myItemInfo = null;
         String fileName = file.getName();
         size = new FileSizeUtil();
         if (fileName.endsWith(".txt")) {
             String fileSize = size.getFileOrDirSize(file);
-            myTxtInfo = new MyTxtInfo(file.getAbsolutePath(), fileName, fileSize);
-            myTxtInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
+            myItemInfo = builder.path(file.getAbsolutePath())
+                    .name(fileName)
+                    .size(fileSize)
+                    .build();
+            myItemInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
             LogUtil.e(fileName);
         }
-        return myTxtInfo;
+        return myItemInfo;
     }
 
-    public void saveShelfToDb(MyTxtInfo myTxtInfo) {
+    public void saveShelfToDb(MyItemInfo myItemInfo) {
 
         String SQL_EXIST = "SELECT NAME, ADDRESS FROM BookInfo WHERE ADDRESS = ?";
-        Cursor cursor = db.rawQuery(SQL_EXIST, new String[]{myTxtInfo.getTxtPath()});
+        Cursor cursor = db.rawQuery(SQL_EXIST, new String[]{myItemInfo.getPath()});
         if (!isCursorExist(cursor)) {//判断是否存在该书籍
             String SQL_INSERT_SHELF = "INSERT INTO BookInfo(" +
                     "NAME, ADDRESS, BOOK_SIZE) VALUES(?,?,?)";
             Object[] args = new Object[]{
-                    myTxtInfo.getTxtName(), myTxtInfo.getTxtPath(), myTxtInfo.getTxtSize()
+                    myItemInfo.getName(), myItemInfo.getPath(), myItemInfo.getSize()
             };
             db.execSQL(SQL_INSERT_SHELF, args);
         } else {
@@ -163,9 +168,9 @@ public class DBManager {
         }
     }
 
-    public List<MyTxtInfo> getShelfFromDb() {
-        List<MyTxtInfo> shelfList = new ArrayList<>();
-        MyTxtInfo myTxtInfo;
+    public List<MyItemInfo> getShelfFromDb() {
+        List<MyItemInfo> shelfList = new ArrayList<>();
+        MyItemInfo myItemInfo;
 
         String SQL_QUERY = "SELECT NAME,ADDRESS,BOOK_SIZE FROM BookInfo";
         Cursor cursor = db.rawQuery(SQL_QUERY, null);
@@ -174,9 +179,12 @@ public class DBManager {
                 String fileName = cursor.getString(cursor.getColumnIndex("NAME"));
                 String filePath = cursor.getString(cursor.getColumnIndex("ADDRESS"));
                 String fileSize = cursor.getString(cursor.getColumnIndex("BOOK_SIZE"));
-                myTxtInfo = new MyTxtInfo(filePath, fileName, fileSize);
-                myTxtInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
-                shelfList.add(myTxtInfo);
+                myItemInfo = builder.path(filePath)
+                        .name(fileName)
+                        .size(fileSize)
+                        .build();
+                myItemInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
+                shelfList.add(myItemInfo);
             } while (cursor.moveToNext());
         } else {
 //            ToastUtil.showToast(GlobalApplication.getContext(), "书架是空的，请选择书籍", 0);
@@ -240,18 +248,18 @@ public class DBManager {
         db.execSQL(SQL_DELETE_BOOK, args);
     }
 
-    public void updateListView(String filterStr, List<MyTxtInfo> mList, MyComparatorAdapter adapter) {
+    public void updateListView(String filterStr, List<MyItemInfo> mList, ComparatorAdapter adapter) {
 
         PinyinComparator comparator = new PinyinComparator();
-        List<MyTxtInfo> updateData = new ArrayList<>();
+        List<MyItemInfo> updateData = new ArrayList<>();
 
         if (TextUtils.isEmpty(filterStr)) {
             updateData = mList;
         } else {
             updateData.clear();
-            for (MyTxtInfo info : mList) {
-                if (info.getTxtName().contains(filterStr)
-                        || PinyinUtil.converterToFirstSpell(info.getTxtName()).startsWith(filterStr)) {
+            for (MyItemInfo info : mList) {
+                if (info.getName().contains(filterStr)
+                        || PinyinUtil.converterToFirstSpell(info.getName()).startsWith(filterStr)) {
                     updateData.add(info);
                 }
             }
