@@ -16,7 +16,6 @@ import java.util.List;
 
 /**
  * Created by guyuegushu on 2016/10/11.
- *
  */
 public class ComparatorAdapter extends BaseAdapter implements SectionIndexer {
 
@@ -65,6 +64,7 @@ public class ComparatorAdapter extends BaseAdapter implements SectionIndexer {
         } else {
             holder = (Holder) convertView.getTag();
         }
+
         int section = getSectionForPosition(position);
 
         if (getPositionForSection(section) == position) {

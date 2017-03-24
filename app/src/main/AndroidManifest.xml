@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
 
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -24,6 +27,10 @@
         <activity android:name=".Activity.BrowserActivity" />
 
         <activity android:name=".Activity.ReadBook" />
+
+        <activity android:name=".Activity.PictureActivity" />
+
+        <activity android:name=".OpenGLESDemo.OpenGLESDemo" />
 
     </application>
 

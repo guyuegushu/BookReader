@@ -6,6 +6,11 @@
         android:id="@+id/btn_to_browser"
         android:title="@string/btn_local"
         android:icon="@drawable/browser_icon"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/btn_to_openGLES"
+        android:title="@string/btn_openGLES"
+        app:showAsAction="never" />
 
 </menu>

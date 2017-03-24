@@ -292,8 +292,9 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
                     info = builder
                             .name(nameFromPath(path))
                             .path(path)
+                            .letterHead(PinyinUtil.converterToFirstSpell(nameFromPath(path)))
                             .build();
-                    info.setLetterHead(PinyinUtil.converterToFirstSpell(nameFromPath(path)));
+//                    info.setLetterHead(PinyinUtil.converterToFirstSpell(nameFromPath(path)));
                     childList.add(info);
                 }
             }

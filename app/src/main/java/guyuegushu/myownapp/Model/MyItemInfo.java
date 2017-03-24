@@ -14,12 +14,14 @@ public class MyItemInfo {
         this.path = builder.path;
         this.name = builder.name;
         this.size = builder.size;
+        this.letterHead = builder.letterHead;
     }
 
     public static class Builder{
         private String path;
         private String name;
         private String size;
+        private String letterHead;
 
         public Builder path(String txtPath) {
             this.path = txtPath;
@@ -33,6 +35,16 @@ public class MyItemInfo {
 
         public Builder size(String txtSize) {
             this.size = txtSize;
+            return this;
+        }
+
+        public Builder letterHead(String pinyin){
+            String sortString = pinyin.substring(0, 1).toUpperCase();
+            if (sortString.matches("[A-Z]")) {
+                letterHead = sortString;
+            } else {
+                letterHead = "#";
+            }
             return this;
         }
 
@@ -57,14 +69,14 @@ public class MyItemInfo {
         return letterHead;
     }
 
-    public void setLetterHead(String pinyin) {
-        String sortString = pinyin.substring(0, 1).toUpperCase();
-
-        if (sortString.matches("[A-Z]")) {
-            letterHead = sortString;
-        } else {
-            letterHead = "#";
-        }
-    }
+//    public void setLetterHead(String pinyin) {
+//        String sortString = pinyin.substring(0, 1).toUpperCase();
+//
+//        if (sortString.matches("[A-Z]")) {
+//            letterHead = sortString;
+//        } else {
+//            letterHead = "#";
+//        }
+//    }
 
 }

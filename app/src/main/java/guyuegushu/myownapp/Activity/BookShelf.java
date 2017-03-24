@@ -14,6 +14,7 @@ import android.widget.ListView;
 import guyuegushu.myownapp.Dao.DBManager;
 import guyuegushu.myownapp.Interface.ClickListener;
 import guyuegushu.myownapp.Model.MyItemInfo;
+import guyuegushu.myownapp.OpenGLESDemo.OpenGLESDemo;
 import guyuegushu.myownapp.R;
 import guyuegushu.myownapp.StaticGlobal.MyActivityManager;
 import guyuegushu.myownapp.Adapter.ComparatorAdapter;
@@ -52,6 +53,10 @@ public class BookShelf extends AppCompatActivity implements ClickListener {
             case R.id.btn_to_browser:
                 Intent intent = new Intent(BookShelf.this, BrowserActivity.class);
                 startActivity(intent);
+                return true;
+            case R.id.btn_to_openGLES:
+                Intent intent2 = new Intent(BookShelf.this, OpenGLESDemo.class);
+                startActivity(intent2);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

@@ -145,8 +145,9 @@ public class DBManager {
             myItemInfo = builder.path(file.getAbsolutePath())
                     .name(fileName)
                     .size(fileSize)
+                    .letterHead(PinyinUtil.converterToFirstSpell(fileName))
                     .build();
-            myItemInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
+//            myItemInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
             LogUtil.e(fileName);
         }
         return myItemInfo;
@@ -182,8 +183,9 @@ public class DBManager {
                 myItemInfo = builder.path(filePath)
                         .name(fileName)
                         .size(fileSize)
+                        .letterHead(PinyinUtil.converterToFirstSpell(fileName))
                         .build();
-                myItemInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
+//                myItemInfo.setLetterHead(PinyinUtil.converterToFirstSpell(fileName));
                 shelfList.add(myItemInfo);
             } while (cursor.moveToNext());
         } else {

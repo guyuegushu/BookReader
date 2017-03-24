@@ -2,6 +2,7 @@
     <string name="app_name">My阅读</string>
     <string name="btn_exits">退出</string>
     <string name="btn_local">本地</string>
+    <string name="btn_openGLES">openGLES</string>
     <string name="text_shelf">书架</string>
     <string name="create_db">正在创建数据库&#8230;</string>
     <string name="file_name">文件名</string>
