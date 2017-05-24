@@ -16,6 +16,7 @@ import java.util.List;
 
 /**
  * Created by guyuegushu on 2016/10/11.
+ *
  */
 public class ComparatorAdapter extends BaseAdapter implements SectionIndexer {
 

@@ -3,6 +3,7 @@ package guyuegushu.myownapp.Activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ScrollView;
@@ -18,6 +19,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * Created by guyuegushu on 2016/10/25.
  * 上下滑动翻页
+ * 对连续空格进行识别，发现后进行 “\n\n”，自动空两格，从第一个非空格处进行输出
  */
 public class ReadBook extends Activity {
 
@@ -37,6 +39,14 @@ public class ReadBook extends Activity {
         skipNum = dbManager.getSkipNum(getBookPath());
         init();
         reading();
+
+        String s = "我是，";
+        try {
+            int sx = s.getBytes("gb2312").length;
+            LogUtil.e("" + sx);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     private void init() {

@@ -15,8 +15,6 @@ import android.widget.ImageView;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import guyuegushu.myownapp.Activity.PictureActivity;
-
 /**
  * Created by Administrator on 2017/3/16.
  */
@@ -88,7 +86,7 @@ public class PictureViewAdapter extends BaseAdapter {
         }
 
         @Override
-        protected Bitmap doInBackground(Integer...params) {
+        protected Bitmap doInBackground(Integer... params) {
             data = params[0];
             return PictureViewAdapter.decodeBitmapFromResource(context.getResources(), data, 100, 100);
         }
@@ -96,21 +94,21 @@ public class PictureViewAdapter extends BaseAdapter {
         @Override
         protected void onPostExecute(Bitmap bitmap) {
 
-            if (isCancelled()){
+            if (isCancelled()) {
                 bitmap = null;
             }
 
             if (pictureViewRef != null && bitmap != null) {
                 final ImageView imageView = (ImageView) pictureViewRef.get();
                 final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
-                if (this == bitmapWorkerTask && imageView != null){
+                if (this == bitmapWorkerTask && imageView != null) {
                     imageView.setImageBitmap(bitmap);
                 }
             }
         }
     }
 
-    static class AsyncDrawable extends BitmapDrawable{
+    static class AsyncDrawable extends BitmapDrawable {
 
         private final WeakReference bitmapWorkerTaskRef;
 
@@ -119,12 +117,12 @@ public class PictureViewAdapter extends BaseAdapter {
             bitmapWorkerTaskRef = new WeakReference(bitmapWorkerTask);
         }
 
-        public BitmapWorkerTask getBitmapWorkerTask(){
+        public BitmapWorkerTask getBitmapWorkerTask() {
             return (BitmapWorkerTask) bitmapWorkerTaskRef.get();
         }
     }
 
-    public void loadBitmap(int resId, ImageView imageView){
+    public void loadBitmap(int resId, ImageView imageView) {
         if (cancelPotentialWork(resId, imageView)) {
             final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
             final AsyncDrawable asyncDrawable = new AsyncDrawable(context.getResources(), bitmap, task);
@@ -146,7 +144,7 @@ public class PictureViewAdapter extends BaseAdapter {
         return true;
     }
 
-    private static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView){
+    private static BitmapWorkerTask getBitmapWorkerTask(ImageView imageView) {
         if (imageView != null) {
             final Drawable drawable = imageView.getDrawable();
             if (drawable instanceof AsyncDrawable) {

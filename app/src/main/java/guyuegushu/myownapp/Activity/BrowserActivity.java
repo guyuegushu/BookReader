@@ -123,6 +123,7 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
     }
 
     private void initSearchView(final List<MyItemInfo> defaultList) {
+
         adapter = new ComparatorAdapter(BrowserActivity.this, defaultList, BrowserActivity.this);
 
         search = (EditTextForSearch) findViewById(R.id.search_bar);
