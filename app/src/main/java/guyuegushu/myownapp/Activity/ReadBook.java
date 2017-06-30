@@ -3,30 +3,68 @@ package guyuegushu.myownapp.Activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.MotionEvent;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ScrollView;
-import android.widget.TextView;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import guyuegushu.myownapp.Adapter.ReadViewPagerAdapter;
 import guyuegushu.myownapp.Dao.DBManager;
+import guyuegushu.myownapp.Interface.PageOverListener;
+import guyuegushu.myownapp.OverrideView.TextViewForRead;
 import guyuegushu.myownapp.R;
 import guyuegushu.myownapp.StaticGlobal.MyActivityManager;
-import guyuegushu.myownapp.Util.LogUtil;
-
-import java.io.UnsupportedEncodingException;
 
 /**
  * Created by guyuegushu on 2016/10/25.
  * 上下滑动翻页
  * 对连续空格进行识别，发现后进行 “\n\n”，自动空两格，从第一个非空格处进行输出
  */
-public class ReadBook extends Activity {
+public class ReadBook extends Activity implements ViewPager.OnPageChangeListener, PageOverListener {
 
-    private TextView display;
     private DBManager dbManager;
-    private ScrollView scrollView;
-    private int skipNum;
+    private ViewPager mViewPager;
+    private List<View> mPageList;
+    private boolean isNeedContinue;
+
+    TextViewForRead textViewForRead;
+    TextViewForRead textViewForRead2;
+
+    public void test2(String path) {
+        File file = new File(path);
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
+            String tmp2 = null;
+            StringBuilder tmp = new StringBuilder();
+//            while ((tmp2 = reader.readLine()) != null){
+//                tmp.append(tmp2);
+//                LogUtil.e(tmp2);
+//            }
+//            textViewForRead.setText(tmp.toString());
+            char[] t = new char[1024];
+//            tmp2 = reader.readLine();
+            reader.read(t);
+            textViewForRead.setText(new String(t));
+//            LogUtil.e("readLine = " + tmp2.length() + '\n' + "read = " + t.length);
+//            textViewForRead.setText(tmp2);
+
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,28 +72,35 @@ public class ReadBook extends Activity {
         MyActivityManager.getInstance().addActivity(ReadBook.this);
         setContentView(R.layout.activity_display);
         dbManager = new DBManager(this);
-        display = (TextView) findViewById(R.id.display);
-        scrollView = (ScrollView) findViewById(R.id.scrollView);
-        skipNum = dbManager.getSkipNum(getBookPath());
         init();
-        reading();
+//        test2(getBookPath());
 
-        String s = "我是，";
-        try {
-            int sx = s.getBytes("gb2312").length;
-            LogUtil.e("" + sx);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+//        openBook(getBookPath(), 0);
+
     }
 
     private void init() {
-        if (!dbManager.isFirstOpen(getBookPath())) {
+        mPageList = new ArrayList<>();
+        mViewPager = (ViewPager) findViewById(R.id.reading_pager);
 
-            display.setText(getBookContent(skipNum));
-        } else {
-            LogUtil.d("不是第一次打开");
-        }
+        View page1 = LayoutInflater.from(this).inflate(R.layout.read_viewpage1, null);
+        View page2 = LayoutInflater.from(this).inflate(R.layout.read_viewpage2, null);
+        View page3 = LayoutInflater.from(this).inflate(R.layout.read_viewpage3, null);
+
+        textViewForRead = (TextViewForRead) page2.findViewById(R.id.view_page2);
+        textViewForRead2 = (TextViewForRead) page1.findViewById(R.id.view_page1);
+
+
+        mPageList.add(page1);
+        mPageList.add(page2);
+        mPageList.add(page3);
+
+        PagerAdapter adapter = new ReadViewPagerAdapter(mPageList);
+        mViewPager.setAdapter(adapter);
+        mViewPager.setOnPageChangeListener(this);
+        mViewPager.setCurrentItem(1, false);
+
+
     }
 
     private String getBookPath() {
@@ -67,97 +112,80 @@ public class ReadBook extends Activity {
         return bookPath;
     }
 
-    private String getBookContent(int localSkipNum) {
+    private void openBook(String bookPath, int skipCharNum) {
 
-        String cache = "";
+        isNeedContinue = true;
+
+        File file = new File(bookPath);
+        char[] charArrays = null;
+        StringBuilder stringBuilder = null;
         try {
-            cache = new String(dbManager.openBook(getBookPath(), localSkipNum), "GB2312");
-        } catch (UnsupportedEncodingException e) {
+            charArrays = new char[1];
+            stringBuilder = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            while (isNeedContinue) {
+                for (int i = 1; i > skipCharNum; i++) {
+                    int read = reader.read(charArrays);
+
+                    if (read == -1) {
+
+                        textViewForRead.setText(stringBuilder.toString());
+                        stringBuilder.delete(0, stringBuilder.length());
+                        break;
+                    }
+
+                    stringBuilder.append(new String(charArrays));
+
+                    if (charArrays[0] == '\n') {
+                        textViewForRead.setText(stringBuilder.toString());
+                        stringBuilder.delete(0, stringBuilder.length());
+                        break;
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        return cache;
-    }
 
-    private void isAheadTo() {
-        skipNum = skipNum - 1;
-        LogUtil.d("" + skipNum);
-    }
-
-    private void isBackwardTo() {
-        skipNum = skipNum + 1;
-        LogUtil.d("" + skipNum);
-    }
-
-    private void reading() {
-        scrollView.setOnTouchListener(new View.OnTouchListener() {
-            int totalMove = 0;
-            int startY = 0;
-            int endY = 0;
-            String cache = "";
-
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-
-                int viewOutside = view.getScrollY();
-                int viewInside = view.getHeight();
-                int viewHeight = scrollView.getChildAt(0).getMeasuredHeight();
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        startY = (int) motionEvent.getY();
-                        totalMove = 0;
-                        return false;
-
-                    case MotionEvent.ACTION_MOVE:
-                        endY = (int) motionEvent.getY();
-                        totalMove += endY - startY;
-                        return false;
-
-                    case MotionEvent.ACTION_UP:
-                        if (viewOutside == 0) {//这里不能是getScrollY() <= 0
-                            if (dbManager.isFirstPage(skipNum)) {
-                                skipNum = 1;
-                                cache = getBookContent(skipNum);
-                                display.setText(cache);
-                            } else {
-                                isAheadTo();
-                                cache = getBookContent(skipNum);
-                                scrollView.scrollTo(0, viewHeight);
-                                display.setText(cache);
-                            }
-
-
-                            //这里不能是 >=
-                            // 原因：getScrollY()值不是绝对靠谱的，它会超过边界值，
-                            // 但是它自己会恢复正确，导致上面的计算条件不成立
-                            // 仔细想想也感觉想得通，系统的ScrollView在处理滚动的时候动态计算
-                            // 那个scrollY的时候也会出现超过边界再修正的情况
-                        } else if (viewHeight == (viewOutside + viewInside)) {
-                            if (dbManager.isFirstPage(skipNum)) {
-                                isBackwardTo();
-                                cache = getBookContent(skipNum);
-                                scrollView.scrollTo(0, -viewHeight);
-                                display.setText(cache);
-                            } else {
-                                isBackwardTo();
-                                cache = getBookContent(skipNum);
-                                scrollView.scrollTo(0, -viewHeight);
-                                display.setText(cache);
-                            }
-                        }
-                        return false;
-                    default:
-                        break;
-                }
-                return false;
-            }
-        });
     }
 
     @Override
     protected void onDestroy() {
 
-        dbManager.saveSkipNum(getBookPath(), skipNum);
-        LogUtil.d("" + skipNum);
+//        dbManager.saveSkipNum(getBookPath(), skipNum);
+//        LogUtil.d("" + skipNum);
         super.onDestroy();
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+
+        if (mPageList.size() > 1) {
+//            if (position < 0) {
+//                position = 1;
+//                mViewPager.setCurrentItem(position, false);
+//            } else if (position > 1) {
+//                position = 0;
+//                mViewPager.setCurrentItem(position, false);
+//            }
+            mViewPager.setCurrentItem(1, false);
+        }
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
+    }
+
+    @Override
+    public void onePageOver(int charCount) {
+        isNeedContinue = false;
     }
 }

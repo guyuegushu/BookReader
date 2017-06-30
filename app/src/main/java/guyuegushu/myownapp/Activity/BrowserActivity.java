@@ -12,6 +12,7 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -20,10 +21,15 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import guyuegushu.myownapp.Adapter.ComparatorAdapter;
 import guyuegushu.myownapp.Dao.DBManager;
 import guyuegushu.myownapp.Interface.ClickListener;
-import guyuegushu.myownapp.Model.MyItemInfo;
+import guyuegushu.myownapp.Model.BookInfoToShelf;
 import guyuegushu.myownapp.OverrideView.EditTextForSearch;
 import guyuegushu.myownapp.OverrideView.SideBar;
 import guyuegushu.myownapp.R;
@@ -32,11 +38,6 @@ import guyuegushu.myownapp.StaticGlobal.PinyinComparator;
 import guyuegushu.myownapp.Util.PinyinUtil;
 import guyuegushu.myownapp.Util.ToastUtil;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Created by guyuegushu on 2016/10/9.
  * 现在是单独的txt浏览器
@@ -44,7 +45,7 @@ import java.util.List;
 public class BrowserActivity extends AppCompatActivity implements ClickListener {
 
     private DBManager dbManager;
-    private List<MyItemInfo> mList;
+    private List<BookInfoToShelf> mList;
     private ListView mListView;
 
     private Handler handler = new Handler() {
@@ -75,7 +76,7 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
     private ComparatorAdapter adapter;
     private EditTextForSearch search;
 
-    private List<MyItemInfo> initBrowser() {
+    private List<BookInfoToShelf> initBrowser() {
         String finalRoot = Environment.getExternalStorageDirectory().getAbsolutePath();
         return childFileFromPath(finalRoot);
     }
@@ -86,12 +87,12 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
             initSideBar(mList);
             initSearchView(mList);
         } else {
-            ToastUtil.showToast(BrowserActivity.this, R.string.sdcard_not_exist, 0);
+            ToastUtil.showToast(R.string.sdcard_not_exist, 0);
         }
 
     }
 
-    private void initListView(List<MyItemInfo> defaultList) {
+    private void initListView(List<BookInfoToShelf> defaultList) {
 
         PinyinComparator comparator = new PinyinComparator();
         Collections.sort(defaultList, comparator);
@@ -99,7 +100,7 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
         mListView.setAdapter(adapter);
     }
 
-    private void initSideBar(List<MyItemInfo> defaultList) {
+    private void initSideBar(List<BookInfoToShelf> defaultList) {
 
         adapter = new ComparatorAdapter(BrowserActivity.this, defaultList, BrowserActivity.this);
 
@@ -122,7 +123,7 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
         });
     }
 
-    private void initSearchView(final List<MyItemInfo> defaultList) {
+    private void initSearchView(final List<BookInfoToShelf> defaultList) {
 
         adapter = new ComparatorAdapter(BrowserActivity.this, defaultList, BrowserActivity.this);
 
@@ -130,7 +131,7 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
         if (getLastCustomNonConfigurationInstance() != null) {
             String lastWord = (String) getLastCustomNonConfigurationInstance();
             search.setText(lastWord);
-            dbManager.updateListView(lastWord, defaultList, adapter);
+            updateListView(lastWord, defaultList, adapter);
         }
 
         search.addTextChangedListener(new TextWatcher() {
@@ -141,7 +142,7 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                dbManager.updateListView(s.toString(), defaultList, adapter);
+                updateListView(s.toString(), defaultList, adapter);
             }
 
             @Override
@@ -169,14 +170,34 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
 
     }
 
+    public void updateListView(String filterStr, List<BookInfoToShelf> mList, ComparatorAdapter adapter) {
+
+        PinyinComparator comparator = new PinyinComparator();
+        List<BookInfoToShelf> updateData = new ArrayList<>();
+
+        if (TextUtils.isEmpty(filterStr)) {
+            updateData = mList;
+        } else {
+            updateData.clear();
+            for (BookInfoToShelf info : mList) {
+                if (info.getName().contains(filterStr)
+                        || PinyinUtil.converterToFirstSpell(info.getName()).startsWith(filterStr)) {
+                    updateData.add(info);
+                }
+            }
+        }
+        Collections.sort(updateData, comparator);
+        adapter.update(updateData);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.a1:
-                ToastUtil.showToast(this, R.string.waiting_add, 0);
+                ToastUtil.showToast(R.string.waiting_add, 0);
                 return true;
             case R.id.a2:
-                ToastUtil.showToast(this, R.string.waiting_add, 0);
+                ToastUtil.showToast(R.string.waiting_add, 0);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -185,11 +206,11 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
 
     @Override
     public void onClicks(View item, View widget, int position, int which) {
-        MyItemInfo info = mList.get(position);
+        BookInfoToShelf info = mList.get(position);
 
         if (info.getName().endsWith(".txt")) {
             String bookPath = info.getPath();
-            dbManager.saveShelfToDb(info);
+            dbManager.setBookInfoToShelf(info);
             Intent display = new Intent(this, ReadBook.class);
             display.putExtra("bookPath", bookPath);
             startActivity(display);
@@ -275,8 +296,8 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
         return name;
     }
 
-    public List<MyItemInfo> childFileFromPath(String absolutePath) {
-        List<MyItemInfo> childList = new ArrayList<>();
+    public List<BookInfoToShelf> childFileFromPath(String absolutePath) {
+        List<BookInfoToShelf> childList = new ArrayList<>();
         File root = new File(absolutePath);
         if (!root.exists()) {
             childList = null;
@@ -285,11 +306,11 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
             if (childFiles == null) {
                 childList = null;
             } else {
-                MyItemInfo info = null;
-                MyItemInfo.Builder builder = null;
+                BookInfoToShelf info = null;
+                BookInfoToShelf.Builder builder = null;
                 for (File child : childFiles) {
                     String path = child.getAbsolutePath();
-                    builder = new MyItemInfo.Builder();
+                    builder = new BookInfoToShelf.Builder();
                     info = builder
                             .name(nameFromPath(path))
                             .path(path)
@@ -303,7 +324,7 @@ public class BrowserActivity extends AppCompatActivity implements ClickListener 
         return childList;
     }
 
-    public List<MyItemInfo> parentFileFromPath(String absolutePath) {
+    public List<BookInfoToShelf> parentFileFromPath(String absolutePath) {
         int desPosition = absolutePath.lastIndexOf('/');
         if (desPosition != -1) {
             absolutePath = absolutePath.substring(0, desPosition + 1);

@@ -4,13 +4,13 @@ package guyuegushu.myownapp.Model;
  * Created by guyuegushu on 2016/10/11.
  * 保存信息的模型类
  */
-public class MyItemInfo {
+public class BookInfoToShelf {
     private String path;
     private String name;
     private String size;
     private String letterHead;
 
-    public MyItemInfo(Builder builder) {
+    public BookInfoToShelf(Builder builder) {
         this.path = builder.path;
         this.name = builder.name;
         this.size = builder.size;
@@ -48,8 +48,8 @@ public class MyItemInfo {
             return this;
         }
 
-        public MyItemInfo build(){
-            return new MyItemInfo(this);
+        public BookInfoToShelf build(){
+            return new BookInfoToShelf(this);
         }
     }
 

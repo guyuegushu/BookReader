@@ -13,12 +13,19 @@ import android.widget.ListView;
 
 import guyuegushu.myownapp.Dao.DBManager;
 import guyuegushu.myownapp.Interface.ClickListener;
-import guyuegushu.myownapp.Model.MyItemInfo;
+import guyuegushu.myownapp.Model.BookInfoToShelf;
 import guyuegushu.myownapp.OpenGLESDemo.OpenGLESDemo;
 import guyuegushu.myownapp.R;
 import guyuegushu.myownapp.StaticGlobal.MyActivityManager;
 import guyuegushu.myownapp.Adapter.ComparatorAdapter;
+import guyuegushu.myownapp.Util.LogUtil;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +36,60 @@ import java.util.List;
 public class BookShelf extends AppCompatActivity implements ClickListener {
 
     private DBManager dbManager;
-    private List<MyItemInfo> shelfList;
+    private List<BookInfoToShelf> shelfList;
+
+    /*
+        char是2个字节
+        中文是GB2312是2个字节，是utf-8是3个字节
+        中文符号是2个字节
+        英文符号是1个字节
+        全角符号是2个字节
+        全角英文是2个字节
+
+        经过简陋的实验，文本文件大小并不能够影响他的读取，一个185M的文件，从sd卡读到内存并转换成string只要1000ms
+     */
+
+    private void test(String path) {
+        File file = new File(path);
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            byte[] bytes = new byte[4000];
+            long length = 0;
+            StringBuilder stringBuilder = new StringBuilder();
+            long sT = System.currentTimeMillis();
+            while (fis.read(bytes) != -1) {
+                stringBuilder.append(String.valueOf(bytes));
+            }
+            long eT = System.currentTimeMillis();
+            LogUtil.d("共用时：" + (eT - sT) );
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+/*              会读到空行
+                一次读到回车为止
+* */
+    private void test2(String path){
+        File file = new File(path);
+        try {
+            FileInputStream fis = new FileInputStream(file);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(fis));
+            long sT = System.currentTimeMillis();
+            String tmp = reader.readLine();
+            String tmp3 = reader.readLine();
+            String tmp2 = reader.readLine();
+
+            long eT = System.currentTimeMillis();
+            LogUtil.d("共用时：" + (eT - sT) );
+            LogUtil.d("output：" +  tmp2);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +151,7 @@ public class BookShelf extends AppCompatActivity implements ClickListener {
     private void setShelfListView() {
 
         ListView shelfListView = (ListView) findViewById(R.id.shelf);
-        shelfList = dbManager.getShelfFromDb();
+        shelfList = dbManager.getBookInfoToShelf();
         ComparatorAdapter shelfAdapter = new ComparatorAdapter(this, shelfList, this);
         shelfListView.setAdapter(shelfAdapter);
     }
@@ -109,6 +169,7 @@ public class BookShelf extends AppCompatActivity implements ClickListener {
         String bookPath = shelfList.get(position).getPath();
         Intent shelfIntent = new Intent(this, ReadBook.class);
         shelfIntent.putExtra("bookPath", bookPath);
+        test2(bookPath);
         startActivityForResult(shelfIntent, RESULT_OK);
     }
 

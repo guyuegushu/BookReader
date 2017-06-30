@@ -9,7 +9,7 @@ import android.widget.SectionIndexer;
 import android.widget.TextView;
 
 import guyuegushu.myownapp.Interface.ClickListener;
-import guyuegushu.myownapp.Model.MyItemInfo;
+import guyuegushu.myownapp.Model.BookInfoToShelf;
 import guyuegushu.myownapp.R;
 
 import java.util.List;
@@ -20,18 +20,18 @@ import java.util.List;
  */
 public class ComparatorAdapter extends BaseAdapter implements SectionIndexer {
 
-    private List<MyItemInfo> mList;
+    private List<BookInfoToShelf> mList;
     private LayoutInflater mInflater;
     private ClickListener mListener;
 
-    public ComparatorAdapter(Context context, List<MyItemInfo> data, ClickListener clickListener) {
+    public ComparatorAdapter(Context context, List<BookInfoToShelf> data, ClickListener clickListener) {
 
         mListener = clickListener;
         mInflater = LayoutInflater.from(context);
         mList = data;
     }
 
-    public void update(List<MyItemInfo> list) {
+    public void update(List<BookInfoToShelf> list) {
         mList = list;
         notifyDataSetChanged();
     }
@@ -53,7 +53,7 @@ public class ComparatorAdapter extends BaseAdapter implements SectionIndexer {
 
     @Override
     public View getView(int position, View convertView, final ViewGroup parent) {
-        MyItemInfo tmp = mList.get(position);
+        BookInfoToShelf tmp = mList.get(position);
         Holder holder = null;
         if (convertView == null) {
             convertView = mInflater.inflate(R.layout.list_item, null);

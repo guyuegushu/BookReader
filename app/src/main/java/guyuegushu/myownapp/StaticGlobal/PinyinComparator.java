@@ -1,6 +1,6 @@
 package guyuegushu.myownapp.StaticGlobal;
 
-import guyuegushu.myownapp.Model.MyItemInfo;
+import guyuegushu.myownapp.Model.BookInfoToShelf;
 
 import java.util.Comparator;
 
@@ -8,9 +8,9 @@ import java.util.Comparator;
  * Created by guyuegushu on 2017/2/20.
  */
 
-public class PinyinComparator implements Comparator<MyItemInfo> {
+public class PinyinComparator implements Comparator<BookInfoToShelf> {
     @Override
-    public int compare(MyItemInfo lhs, MyItemInfo rhs) {
+    public int compare(BookInfoToShelf lhs, BookInfoToShelf rhs) {
         //a > b --> 1 , a和b互换，小的在前面这个时候
         if (lhs == null || rhs == null) {
             if (lhs == null && rhs == null) {
